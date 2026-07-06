@@ -762,12 +762,16 @@ figure { margin: 0; }
   text-align: center;
 }
 
+/* the section-header two-tone, inline: copy in the same muted grey as
+   the other headlines' first lines, the two live counters in the dark
+   tone — size and weight identical to every other .heading */
 .cta__headline {
   margin-top: 24px;
   max-width: 22ch;
+  color: var(--text-4);
 }
 
-.cta__num { font-weight: 500; }
+.cta__num { color: var(--text-1); }
 
 .cta__sub {
   margin-top: 24px;
