@@ -1,0 +1,904 @@
+/* ============================================================
+   LeoTrace — marketing site 3.5
+   Light-skin foundation: neutral ramp, luminance-step + hairline
+   depth, colour only for status. Geist / Geist Mono, six roles.
+   ============================================================ */
+
+/* ---------- Fonts ---------- */
+
+@font-face {
+  font-family: "Geist";
+  src: url("../fonts/Geist-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  src: url("../fonts/GeistMono-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------- Tokens ---------- */
+
+:root {
+  /* neutral light ramp — page near-white, surfaces rise toward pure white */
+  --canvas: #f8fafa;
+  --surface-1: #fbfcfc;
+  --surface-2: #ffffff;
+  --hairline: #e4e4e4;
+  --hairline-faint: #eeefef;
+
+  --text-1: #0f0f10;
+  --text-2: #575757;
+  --text-3: #737373;
+  --text-4: #989898;
+
+  /* the three-tone dot system */
+  --dot-dark: #141415;
+  --dot-mid: #8c8d8d;
+  --dot-faint: #dcdddd;
+
+  /* status — bright accent on near-neutral surface, never a flooded fill */
+  --red: #d92c20;
+
+  --sans: "Geist", system-ui, -apple-system, sans-serif;
+  --mono: "Geist Mono", ui-monospace, "SF Mono", monospace;
+
+  --container: 1120px;
+  --gutter: clamp(20px, 4vw, 64px);
+  --chrome-pad: 32px;               /* nav + footer horizontal padding */
+  --nav-h: 63px;                    /* bar height: 20px padding ×2 + content row */
+  --section-gap: clamp(96px, 14vh, 176px);
+
+  --ease-out: cubic-bezier(0.22, 0.61, 0.2, 1);
+  --reveal-dur: 160ms;
+  --line-dur: 300ms;
+}
+
+/* ---------- Reset-ish ---------- */
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--text-1);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, p, ol { margin: 0; }
+ol { padding: 0; list-style: none; }
+a { color: inherit; text-decoration: none; }
+canvas { display: block; }
+figure { margin: 0; }
+
+.container {
+  width: min(var(--container), 100% - 2 * var(--gutter));
+  margin-inline: auto;
+}
+
+/* ---------- Type roles ---------- */
+
+.display {
+  font-weight: 650;
+  font-size: clamp(42px, 4.6vw, 64px);
+  line-height: 1.06;
+  letter-spacing: -0.022em;
+}
+
+.heading {
+  font-weight: 650;
+  font-size: clamp(32px, 3.4vw, 46px);
+  line-height: 1.12;
+  letter-spacing: -0.018em;
+}
+
+.is-muted { color: var(--text-4); }
+
+.lead {
+  font-size: 18px;
+  line-height: 32px;
+  color: var(--text-2);
+}
+
+.eyebrow {
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.telemetry {
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-4);
+}
+
+.mono { font-family: var(--mono); font-weight: 400; }
+.is-red { color: var(--red); }
+
+/* ---------- Buttons (utility role: Geist 500) ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1;
+  padding: 13px 20px;
+  border-radius: 8px;
+  transition: background-color 140ms var(--ease-out), color 140ms var(--ease-out);
+}
+
+.btn__glyph { font-weight: 400; }
+
+.btn--solid {
+  background: var(--text-1);
+  color: var(--surface-2);
+}
+
+.btn--solid:hover { background: #2a2a2c; }
+
+.btn--ghost {
+  background: var(--surface-2);
+  color: var(--text-2);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.btn--ghost:hover { color: var(--text-1); }
+
+.cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cta-row--centred { justify-content: center; }
+
+/* ---------- Wordmark + terminal cursor ---------- */
+
+.wordmark {
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  color: var(--text-1);
+  display: inline-flex;
+  align-items: center;
+}
+
+.cursor {
+  display: inline-block;
+  width: 7px;
+  height: 15px;
+  margin-left: 3px;
+  background: var(--text-4); /* muted — clearly lighter than the wordmark */
+}
+
+/* nav and footer cursors blink identically — a slow, eased fade */
+@media (prefers-reduced-motion: no-preference) {
+  .cursor { animation: blink 1.5s ease-in-out infinite; }
+}
+
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ---------- Nav ---------- */
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 18px;
+  padding: 20px var(--chrome-pad);
+  background: rgba(248, 250, 250, 0.7);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+/* hide on scroll-down, return on scroll-up */
+.nav.is-hidden { transform: translateY(-100%); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .nav { transition: transform 220ms var(--ease-out); }
+}
+
+.nav__menu {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.nav__link {
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  display: inline-flex;
+  align-items: baseline;
+  transition: color 140ms var(--ease-out);
+}
+
+.nav__link:hover { color: var(--text-1); }
+
+.nav__num {
+  color: var(--text-4);
+  margin-right: 8px;
+  transition: color 140ms var(--ease-out);
+}
+
+.nav__link:hover .nav__num { color: var(--text-2); }
+
+.nav__arrow { margin-left: 8px; }
+
+.nav__burger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.nav__burger span {
+  display: block;
+  height: 1.5px;
+  width: 100%;
+  background: var(--text-1);
+  transition: transform 160ms var(--ease-out);
+}
+
+/* ---------- Section reveal grammar ----------
+   eyebrow → headline → body/points rise-and-fade; two-line
+   headlines mask-reveal line by line. JS staggers via
+   transition-delay; sections gain .is-in on entry. */
+
+.line { display: block; overflow: hidden; }
+.line__inner { display: block; }
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-section] [data-reveal] {
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity var(--reveal-dur) var(--ease-out), transform var(--reveal-dur) var(--ease-out);
+  }
+
+  [data-section].is-in [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+
+  [data-section] .line__inner {
+    transform: translateY(110%);
+    transition: transform var(--line-dur) var(--ease-out);
+  }
+
+  [data-section].is-in .line__inner { transform: none; }
+}
+
+/* ============================================================
+   02 · Hero — full viewport; text hard-left, piece low-right
+   ============================================================ */
+
+.hero {
+  position: relative;
+  /* the translucent bar overlays the hero, so the hero owns the full
+     viewport and its content centres on the screen, not below the bar */
+  margin-top: calc(-1 * var(--nav-h));
+  /* pinned: the extra length is the scrub for the Queen's two moves —
+     the page only releases once the second move completes */
+  height: 260vh;
+}
+
+.hero__sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.hero__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* reduced motion: no pinned sequence — one full-viewport still */
+@media (prefers-reduced-motion: reduce) {
+  .hero { height: auto; }
+}
+
+.hero__content {
+  position: relative;
+  z-index: 1;
+  padding-block: 96px;
+}
+
+.hero .display { margin-top: 24px; }
+
+.hero__sub {
+  margin-top: 28px;
+  max-width: 42ch;
+}
+
+.hero .cta-row { margin-top: 36px; }
+
+/* ============================================================
+   03 · The issue — pinned scroll sequence
+   ============================================================ */
+
+.issue {
+  /* tall body: the extra length is the scrub distance */
+  height: 340vh;
+}
+
+.issue__sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.issue__grid {
+  position: relative; /* copy sits above the field + scrim */
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 30rem) minmax(0, 1fr);
+  gap: clamp(32px, 6vw, 96px);
+  align-items: center;
+  flex: 1;
+  min-height: 0;
+  padding-top: 66px; /* clear the nav */
+}
+
+.heading + .points,
+.issue .heading { margin-top: 24px; }
+
+.points { margin-top: 40px; }
+
+/* each point block carries its own short left rule — three separate
+   segments, one per block, as in the reference frame */
+.point {
+  display: flex;
+  gap: 20px;
+  padding: 4px 0 4px 24px;
+  border-left: 1px solid var(--hairline);
+}
+
+.point + .point { margin-top: 32px; }
+
+.point__num {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--text-4);
+  padding-top: 4px;
+}
+
+.point__title {
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.point__body {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text-3);
+  max-width: 40ch;
+}
+
+/* scrubbed accumulation — driven by .is-on from JS */
+@media (prefers-reduced-motion: no-preference) {
+  .point {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 220ms var(--ease-out), transform 220ms var(--ease-out);
+  }
+
+  .point.is-on {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* the spread field runs full-bleed behind the frame */
+.issue__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* readability scrim — particles fall off softly behind the copy */
+.issue__fade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    rgba(248, 250, 250, 0.97) 0%,
+    rgba(248, 250, 250, 0.92) 30%,
+    rgba(248, 250, 250, 0.55) 50%,
+    rgba(248, 250, 250, 0) 74%
+  );
+}
+
+/* full-width telemetry strip, aligned to the nav's chrome padding.
+   A HUD of the pinned frame: fades in when the pin engages, resolves
+   away (line retracting) before the pin releases — never a stray line
+   drifting between sections. */
+.issue__telemetry {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 20px var(--chrome-pad);
+  opacity: 0;
+}
+
+.issue__telemetry.is-live { opacity: 1; }
+
+.issue__telemetry.is-done .issue__bar { transform: scaleX(0); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .issue__telemetry { transition: opacity 220ms var(--ease-out); }
+
+  .issue__bar {
+    transform-origin: left;
+    transition: transform 260ms var(--ease-out);
+  }
+}
+
+.issue__bar {
+  flex: 1;
+  height: 1px;
+  background: var(--hairline);
+}
+
+.issue__bar-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--text-1);
+}
+
+/* ============================================================
+   04 · The solution — three cards, one system
+   ============================================================ */
+
+.solution {
+  position: relative;
+  /* own stacking context: the carry-over strip and its scrim live on
+     negative z, so no engine can ever paint them over the content */
+  isolation: isolate;
+}
+
+.solution__sticky {
+  position: relative;
+  z-index: 2; /* content always paints above the dot strip + gradient */
+  padding-block: var(--section-gap);
+}
+
+/* pinned sequence: ~a viewport-height of scroll per card (~3 total), so
+   each card gets its own beat — scroll-driven, never a forced wait. The
+   page releases only after the third graphic completes. */
+@media (min-width: 821px) and (prefers-reduced-motion: no-preference) {
+  .solution { height: 400vh; }
+
+  .solution__sticky {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    height: 100svh;
+    display: flex;
+    align-items: center; /* eyebrow + headline + cards centred as one block */
+    overflow: hidden;
+    padding-block: 0;
+  }
+}
+
+/* the issue's matrix carries over the boundary, easing out on-grid */
+.solution__carryover {
+  position: absolute;
+  z-index: -2; /* behind everything in the section */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: min(44vh, 400px);
+  pointer-events: none;
+}
+
+/* the same readability scrim as section 2, carried through — above the
+   matrix strip, below all content */
+.solution::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: min(44vh, 400px);
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    rgba(248, 250, 250, 0.97) 0%,
+    rgba(248, 250, 250, 0.92) 30%,
+    rgba(248, 250, 250, 0.55) 50%,
+    rgba(248, 250, 250, 0) 74%
+  );
+}
+
+
+.solution .heading { margin-top: 24px; } /* same eyebrow→headline gap as the other sections */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 56px;
+}
+
+.card {
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: 12px 12px 28px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .card {
+    opacity: 0;
+    transform: translateY(44px);
+    transition: opacity 480ms var(--ease-out), transform 480ms var(--ease-out);
+  }
+
+  .card.is-in {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.card__graphic {
+  background: var(--surface-1);
+  border: 1px solid var(--hairline-faint);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.card__graphic svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.card__meta {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 24px;
+  padding-inline: 8px;
+}
+
+.card__num {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--text-4);
+}
+
+.card__name {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.card__body {
+  margin-top: 10px;
+  padding-inline: 8px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text-3);
+}
+
+/* ============================================================
+   05 · The results — centred, two breathing numbers
+   ============================================================ */
+
+.results { padding-block: var(--section-gap); }
+
+.results__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.results .heading { margin-top: 24px; }
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(32px, 6vw, 96px);
+  margin-top: 72px;
+  width: 100%;
+  max-width: 880px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat__ring {
+  position: relative;
+  width: min(300px, 70vw);
+  aspect-ratio: 1;
+}
+
+.stat__ring canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.stat__figure {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 28px;
+  letter-spacing: -0.01em;
+}
+
+.stat__caption {
+  margin-top: 32px;
+  text-align: left;
+  border-left: 1px solid var(--hairline);
+  padding-left: 20px;
+  max-width: 34ch;
+}
+
+.stat__label {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.stat__num {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--text-4);
+}
+
+.stat__title {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.stat__body {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text-3);
+}
+
+.stat__foot { margin-top: 12px; }
+
+/* ============================================================
+   06 · The CTA — live counter over a rising field
+   ============================================================ */
+
+.cta {
+  position: relative;
+  min-height: 92vh;
+  min-height: 92svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding-block: var(--section-gap);
+}
+
+.cta__canvas {
+  position: absolute;
+  inset: auto 0 0 0;
+  width: 100%;
+  height: 46%;
+  pointer-events: none;
+}
+
+.cta__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.cta__headline {
+  margin-top: 24px;
+  max-width: 22ch;
+}
+
+.cta__num { font-weight: 500; }
+
+.cta__sub {
+  margin-top: 24px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text-3);
+  max-width: 52ch;
+}
+
+.cta .cta-row { margin-top: 36px; }
+
+/* ---------- Footer ---------- */
+
+.footer {
+  border-top: 1px solid var(--hairline);
+  padding: 28px var(--chrome-pad) 32px;
+  background: var(--canvas);
+}
+
+.footer__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.footer__row--legal {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--hairline-faint);
+}
+
+.footer__nav {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.footer__copyright {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-4);
+}
+
+/* ============================================================
+   Mobile — fluid down from 1120
+   ============================================================ */
+
+@media (max-width: 820px) {
+  :root {
+    --chrome-pad: 22px;
+    --nav-h: 72px; /* burger row: 32px + 20px padding ×2 */
+  }
+
+  /* logo + left-aligned hamburger */
+  .nav {
+    justify-content: flex-start;
+    gap: 16px;
+  }
+
+  .nav__burger { display: flex; }
+
+  .nav__menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--hairline);
+    padding: 8px var(--chrome-pad);
+  }
+
+  .nav.is-open .nav__menu { display: flex; }
+
+  .nav__menu .nav__link {
+    padding: 14px 0;
+    width: 100%;
+  }
+
+  .nav.is-open .nav__burger span:first-child { transform: translateY(3.25px) rotate(45deg); }
+  .nav.is-open .nav__burger span:last-child { transform: translateY(-3.25px) rotate(-45deg); }
+
+  /* full-bleed environment behind the copy; the floor sits low so the
+     text keeps its own space */
+  .hero__content { padding-block: calc(var(--nav-h) + 24px) 40vh; }
+
+  .heading { font-size: 28px; }
+
+  .issue { height: 300vh; }
+
+  .issue__grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    align-content: start;
+    overflow: hidden;
+    padding-top: 84px;
+  }
+
+  /* text spans the full width on mobile — protect from the top down */
+  .issue__fade,
+  .solution::after {
+    background: linear-gradient(
+      to bottom,
+      rgba(248, 250, 250, 0.96) 0%,
+      rgba(248, 250, 250, 0.9) 55%,
+      rgba(248, 250, 250, 0.4) 78%,
+      rgba(248, 250, 250, 0) 100%
+    );
+  }
+
+  .points { margin-top: 16px; }
+  .point + .point { margin-top: 20px; }
+  .point__body { max-width: none; }
+
+  .cards { grid-template-columns: 1fr; }
+
+  .stats { grid-template-columns: 1fr; gap: 64px; }
+
+  .cta__headline { max-width: none; }
+
+  .footer__row,
+  .footer__nav {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+}

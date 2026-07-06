@@ -1,0 +1,194 @@
+<!doctype html>
+<!-- LeoTrace marketing site · hand-authored static build -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
+  <title>LeoTrace — We secure your next move</title>
+  <meta name="description" content="Scanners read what's already written. LeoTrace catches the flaw as your agents write it, before it ever reaches the codebase.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/styles.css?v=5">
+  <script type="module" src="js/main.js?v=5"></script>
+</head>
+<body id="top">
+
+  <header class="nav">
+    <button class="nav__burger" type="button" aria-expanded="false" aria-controls="nav-menu" aria-label="Menu">
+      <span></span><span></span>
+    </button>
+    <a class="wordmark" href="#top">LEOTRACE<span class="cursor" aria-hidden="true"></span></a>
+    <nav class="nav__menu" id="nav-menu" aria-label="Primary">
+      <a class="nav__link" href="/team/"><span class="nav__num">01</span>The team</a>
+      <a class="nav__link" href="/mission/"><span class="nav__num">02</span>Our mission</a>
+      <a class="nav__link" href="/demo/"><span class="nav__num">03</span>Schedule a demo<span class="nav__arrow">→</span></a>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- 02 · Hero -->
+    <section class="hero" id="hero" data-section>
+      <div class="hero__sticky">
+        <canvas class="hero__canvas" id="queen-canvas" aria-hidden="true"></canvas>
+        <div class="container hero__content">
+        <p class="eyebrow" data-reveal>‹› Built by security researchers</p>
+        <h1 class="display">
+          <span class="line"><span class="line__inner is-muted">Most security looks back.</span></span>
+          <span class="line"><span class="line__inner">We secure your next move</span></span>
+        </h1>
+        <p class="lead hero__sub" data-reveal>Scanners read what&rsquo;s already written. LeoTrace catches the flaw as your agents write it, before it ever reaches the codebase.</p>
+        <div class="cta-row" data-reveal>
+          <a class="btn btn--solid" href="/demo/">Schedule a demo<span class="btn__glyph">→</span></a>
+          <a class="btn btn--ghost" href="#issue">See how it works<span class="btn__glyph">↓</span></a>
+        </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 · The issue -->
+    <section class="issue" id="issue" data-section>
+      <div class="issue__sticky">
+        <canvas class="issue__canvas" id="spread-canvas" aria-hidden="true"></canvas>
+        <div class="issue__fade" aria-hidden="true"></div>
+        <div class="container issue__grid">
+          <div class="issue__copy">
+            <p class="eyebrow" data-reveal>‹› At agent speed</p>
+            <h2 class="heading">
+              <span class="line"><span class="line__inner is-muted">A flaw doesn&rsquo;t stay one flaw.</span></span>
+              <span class="line"><span class="line__inner">It becomes the pattern.</span></span>
+            </h2>
+            <ol class="points">
+              <li class="point" data-point>
+                <span class="point__num">01</span>
+                <div class="point__text">
+                  <h3 class="point__title">Agents build from context</h3>
+                  <p class="point__body">Agents read your code and copy how it&rsquo;s already done. That&rsquo;s what makes them fast.</p>
+                </div>
+              </li>
+              <li class="point" data-point>
+                <span class="point__num">02</span>
+                <div class="point__text">
+                  <h3 class="point__title">One flaw becomes the pattern</h3>
+                  <p class="point__body">So one insecure assumption becomes the template, reproduced across hundreds of files before anyone reviews a line.</p>
+                </div>
+              </li>
+              <li class="point" data-point>
+                <span class="point__num">03</span>
+                <div class="point__text">
+                  <h3 class="point__title">Reviewing after is too late</h3>
+                  <p class="point__body">Security as an afterthought worked when humans wrote every line. At agent speed, the afterthought is already the architecture.</p>
+                </div>
+              </li>
+            </ol>
+          </div>
+        </div>
+        <div class="issue__telemetry">
+          <span class="telemetry" id="issue-step">01 / 03</span>
+          <div class="issue__bar" aria-hidden="true"><div class="issue__bar-fill" id="issue-bar"></div></div>
+          <span class="telemetry">Spread <span class="mono is-red" id="spread-pct">00%</span></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 · The solution -->
+    <section class="solution" id="solution" data-section>
+      <canvas class="solution__carryover" id="carryover-canvas" aria-hidden="true"></canvas>
+      <div class="solution__sticky">
+      <div class="container">
+        <p class="eyebrow" data-reveal>‹› The solution</p>
+        <h2 class="heading">
+          <span class="line"><span class="line__inner is-muted">Evolve your security with every line.</span></span>
+          <span class="line"><span class="line__inner">Three products, one compounding system.</span></span>
+        </h2>
+        <div class="cards">
+          <article class="card" data-card="prevent">
+            <div class="card__graphic"><svg id="g-prevent" viewBox="0 0 240 240" role="img" aria-label="Vertical streams rise; most are stopped mid-way, one clean stream reaches the top."></svg></div>
+            <div class="card__meta"><span class="card__num">01</span><h3 class="card__name">LeoPrevent</h3></div>
+            <p class="card__body">Fixes flaws inside the coding agent, before the developer sees &ldquo;done.&rdquo;</p>
+          </article>
+          <article class="card" data-card="bench">
+            <div class="card__graphic"><svg id="g-bench" viewBox="0 0 240 240" role="img" aria-label="Three ranked horizontal bars of different lengths; the top bar leads."></svg></div>
+            <div class="card__meta"><span class="card__num">02</span><h3 class="card__name">LeoBench</h3></div>
+            <p class="card__body">Measures how securely every AI coding agent writes code.</p>
+          </article>
+          <article class="card" data-card="reveal">
+            <div class="card__graphic"><svg id="g-reveal" viewBox="0 0 240 240" role="img" aria-label="A marker travels a winding, checkpointed track, clearing stages as it climbs."></svg></div>
+            <div class="card__meta"><span class="card__num">03</span><h3 class="card__name">LeoReveal</h3></div>
+            <p class="card__body">Trains engineers to reason about insecure code, with evidence for leadership.</p>
+          </article>
+        </div>
+      </div>
+      </div>
+    </section>
+
+    <!-- 05 · The results -->
+    <section class="results" id="results" data-section>
+      <div class="container results__inner">
+        <p class="eyebrow" data-reveal>‹› The results</p>
+        <h2 class="heading">
+          <span class="line"><span class="line__inner is-muted">Ship at the speed AI gave you.</span></span>
+          <span class="line"><span class="line__inner">Without the risk it brought.</span></span>
+        </h2>
+        <div class="stats">
+          <figure class="stat">
+            <div class="stat__ring">
+              <canvas id="ring-range" aria-hidden="true"></canvas>
+              <span class="stat__figure">60-90%</span>
+            </div>
+            <figcaption class="stat__caption">
+              <div class="stat__label"><span class="stat__num">01</span><h3 class="stat__title">Fewer vulnerabilities</h3></div>
+              <p class="stat__body">Same model, same prompt, LeoTrace the only variable. Every agent shipped fewer flaws.</p>
+              <p class="telemetry stat__foot">Across 33 real-world tasks</p>
+            </figcaption>
+          </figure>
+          <figure class="stat">
+            <div class="stat__ring">
+              <canvas id="ring-time" aria-hidden="true"></canvas>
+              <span class="stat__figure">≈10s</span>
+            </div>
+            <figcaption class="stat__caption">
+              <div class="stat__label"><span class="stat__num">02</span><h3 class="stat__title">Fix time</h3></div>
+              <p class="stat__body">LeoPrevent catches the flaw as the agent writes it and resolves it in the same turn, no review, no waiting.</p>
+              <p class="telemetry stat__foot">Before the developer sees &quot;done&quot;</p>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- 06 · The CTA -->
+    <section class="cta" id="cta" data-section>
+      <canvas class="cta__canvas" id="cta-canvas" aria-hidden="true"></canvas>
+      <div class="container cta__content">
+        <p class="eyebrow" data-reveal>‹› It&rsquo;s your move</p>
+        <h2 class="heading cta__headline" data-reveal>Since you arrived <span class="mono cta__num" id="cta-time">00:00</span> ago, one agent has written <span class="mono cta__num">≈<span id="cta-lines">0</span></span> lines of code.</h2>
+        <p class="cta__sub" data-reveal>That&rsquo;s one agent. Your team runs many at once and without LeoPrevent, they reproduce your flaws 60&ndash;90% of the time.</p>
+        <div class="cta-row cta-row--centred" data-reveal>
+          <a class="btn btn--solid" href="/demo/">Schedule a demo<span class="btn__glyph">→</span></a>
+          <a class="btn btn--ghost" href="/team/">Meet the team</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="footer__row footer__row--nav">
+      <a class="wordmark" href="#top">LEOTRACE<span class="cursor" aria-hidden="true"></span></a>
+      <nav class="footer__nav" aria-label="Footer">
+        <a class="nav__link" href="/team/"><span class="nav__num">01</span>The team</a>
+        <a class="nav__link" href="/mission/"><span class="nav__num">02</span>Our mission</a>
+        <a class="nav__link" href="/demo/"><span class="nav__num">03</span>Schedule a demo</a>
+        <a class="nav__link" href="/privacy/"><span class="nav__num">04</span>Privacy policy</a>
+        <a class="nav__link" href="https://www.linkedin.com/company/leotrace" rel="noopener"><span class="nav__num">05</span>LinkedIn<span class="nav__arrow">→</span></a>
+      </nav>
+    </div>
+    <div class="footer__row footer__row--legal">
+      <span class="footer__copyright">© 2026 LeoTrace. All rights reserved.</span>
+    </div>
+  </footer>
+
+</body>
+</html>
