@@ -230,6 +230,7 @@ function runScrub(section, sets) {
     return clamp(-rect.top / scrollable, 0, 1);
   }
 
+  let cur = -1;
   let last = -1;
   let rafId = 0;
   let visible = true;
@@ -237,12 +238,15 @@ function runScrub(section, sets) {
   function frame() {
     rafId = 0;
     if (!visible) return;
-    // exact lock-step: state is read straight off the scroll position —
-    // stop scrolling and the sequence stops exactly where it is
-    const p = progress();
-    if (p !== last) {
-      last = p;
-      applyState(p);
+    // scroll-driven with a short glide: the sequence flows through the
+    // scroll input rather than tracking it like a crank — it settles
+    // within a couple hundred ms of stopping, and reverses the same way
+    const target = progress();
+    cur = cur < 0 ? target : cur + (target - cur) * 0.19;
+    if (Math.abs(cur - target) < 0.0005) cur = target;
+    if (cur !== last) {
+      last = cur;
+      applyState(cur);
     }
     rafId = requestAnimationFrame(frame);
   }

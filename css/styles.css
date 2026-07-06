@@ -521,11 +521,11 @@ figure { margin: 0; }
   padding-block: var(--section-gap);
 }
 
-/* pinned sequence: ~a viewport-height of scroll per card (~3 total), so
-   each card gets its own beat — scroll-driven, never a forced wait. The
-   page releases only after the third graphic completes. */
+/* pinned sequence: a light pin — enough scroll for the three cards to
+   land one by one, without demanding a workout. The page releases once
+   the third graphic completes. */
 @media (min-width: 821px) and (prefers-reduced-motion: no-preference) {
-  .solution { height: 400vh; }
+  .solution { height: 220vh; }
 
   .solution__sticky {
     position: sticky;
