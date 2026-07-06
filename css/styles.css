@@ -290,8 +290,9 @@ figure { margin: 0; }
 .line__inner { display: block; }
 
 @media (prefers-reduced-motion: no-preference) {
-  [data-section] [data-reveal],
-  [data-section] .line__inner {
+  /* blocks: eyebrow + supporting copy */
+  [data-section] [data-reveal]:not(.is-split),
+  [data-section] .line__inner:not(.is-split) {
     opacity: 0;
     transform: translateY(20px);
     transition:
@@ -299,8 +300,23 @@ figure { margin: 0; }
       transform var(--reveal-dur) var(--reveal-ease);
   }
 
-  [data-section].is-in [data-reveal],
-  [data-section].is-in .line__inner {
+  [data-section].is-in [data-reveal]:not(.is-split),
+  [data-section].is-in .line__inner:not(.is-split) {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* headline words: each word rises on its own beat */
+  [data-section] .w {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(0.55em);
+    transition:
+      opacity var(--reveal-dur) var(--reveal-ease),
+      transform var(--reveal-dur) var(--reveal-ease);
+  }
+
+  [data-section].is-in .w {
     opacity: 1;
     transform: none;
   }
