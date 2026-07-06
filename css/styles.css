@@ -55,8 +55,9 @@
   --section-gap: clamp(96px, 14vh, 176px);
 
   --ease-out: cubic-bezier(0.22, 0.61, 0.2, 1);
-  --reveal-dur: 160ms;
-  --line-dur: 300ms;
+  /* the entrance grammar: slow, soft, settles gracefully — no overshoot */
+  --reveal-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --reveal-dur: 800ms;
 }
 
 /* ---------- Reset-ish ---------- */
@@ -279,32 +280,30 @@ figure { margin: 0; }
   transition: transform 160ms var(--ease-out);
 }
 
-/* ---------- Section reveal grammar ----------
-   eyebrow → headline → body/points rise-and-fade; two-line
-   headlines mask-reveal line by line. JS staggers via
-   transition-delay; sections gain .is-in on entry. */
+/* ---------- Section entrance grammar (shared, defined once) ----------
+   Eyebrow → headline lines → supporting copy: each fades in while
+   rising gently (~20px), slow and eased, staggered in reading order.
+   One-shot: sections gain .is-in the first time they enter the
+   viewport and never lose it. JS staggers via transition-delay. */
 
-.line { display: block; overflow: hidden; }
+.line { display: block; }
 .line__inner { display: block; }
 
 @media (prefers-reduced-motion: no-preference) {
-  [data-section] [data-reveal] {
+  [data-section] [data-reveal],
+  [data-section] .line__inner {
     opacity: 0;
-    transform: translateY(14px);
-    transition: opacity var(--reveal-dur) var(--ease-out), transform var(--reveal-dur) var(--ease-out);
+    transform: translateY(20px);
+    transition:
+      opacity var(--reveal-dur) var(--reveal-ease),
+      transform var(--reveal-dur) var(--reveal-ease);
   }
 
-  [data-section].is-in [data-reveal] {
+  [data-section].is-in [data-reveal],
+  [data-section].is-in .line__inner {
     opacity: 1;
     transform: none;
   }
-
-  [data-section] .line__inner {
-    transform: translateY(110%);
-    transition: transform var(--line-dur) var(--ease-out);
-  }
-
-  [data-section].is-in .line__inner { transform: none; }
 }
 
 /* ============================================================
