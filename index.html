@@ -9,8 +9,8 @@
   <title>LeoTrace — We secure your next move</title>
   <meta name="description" content="Scanners read what's already written. LeoTrace catches the flaw as your agents write it, before it ever reaches the codebase.">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/styles.css?v=16">
-  <script type="module" src="js/main.js?v=16"></script>
+  <link rel="stylesheet" href="css/styles.css?v=19">
+  <script type="module" src="js/main.js?v=19"></script>
 </head>
 <body id="top">
 
@@ -125,36 +125,28 @@
 
     <!-- 05 · The results -->
     <section class="results" id="results" data-section>
-      <div class="container results__inner">
-        <p class="eyebrow" data-reveal>‹› The results</p>
-        <h2 class="heading">
-          <span class="line"><span class="line__inner is-muted">Ship at the speed AI gave you.</span></span>
-          <span class="line"><span class="line__inner">Without the risk it brought.</span></span>
-        </h2>
-        <div class="stats">
-          <figure class="stat">
-            <div class="stat__ring">
-              <canvas id="ring-range" aria-hidden="true"></canvas>
-              <span class="stat__figure">60-90%</span>
-            </div>
-            <figcaption class="stat__caption">
-              <div class="stat__label"><span class="stat__num">01</span><h3 class="stat__title">Fewer vulnerabilities</h3></div>
-              <p class="stat__body">Same model, same prompt, LeoTrace the only variable. Every agent shipped fewer flaws.</p>
-              <p class="telemetry stat__foot">Across 33 real-world tasks</p>
-            </figcaption>
-          </figure>
-          <figure class="stat">
-            <div class="stat__ring">
-              <canvas id="ring-time" aria-hidden="true"></canvas>
-              <span class="stat__figure">≈10s</span>
-            </div>
-            <figcaption class="stat__caption">
-              <div class="stat__label"><span class="stat__num">02</span><h3 class="stat__title">Fix time</h3></div>
-              <p class="stat__body">LeoPrevent catches the flaw as the agent writes it and resolves it in the same turn, no review, no waiting.</p>
-              <p class="telemetry stat__foot">Before the developer sees &quot;done&quot;</p>
-            </figcaption>
-          </figure>
+      <div class="results__sticky">
+      <div class="container results__grid">
+        <div class="results__copy">
+          <p class="eyebrow" data-reveal>‹› The results</p>
+          <h2 class="heading">
+            <span class="line"><span class="line__inner is-muted">Ship at the speed AI gave you.</span></span>
+            <span class="line"><span class="line__inner">Without the risk it brought.</span></span>
+          </h2>
+          <div class="results__proof" data-reveal>
+            <p class="results__body">Same model, same prompt, LeoTrace the only variable. Every agent shipped fewer flaws.</p>
+            <p class="telemetry results__foot">Across 33 real-world tasks</p>
+          </div>
         </div>
+        <figure class="results__ring">
+          <canvas id="ring-results" aria-hidden="true"></canvas>
+          <figcaption class="results__centre" data-reveal>
+            <span class="results__figure">60&ndash;90<span class="results__pct">%</span></span>
+            <span class="results__label">Fewer vulnerabilities</span>
+            <span class="results__sub"><span class="mono">≈10s</span> fix time</span>
+          </figcaption>
+        </figure>
+      </div>
       </div>
     </section>
 
