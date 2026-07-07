@@ -16,6 +16,16 @@ export function initNav() {
     })
   );
 
+  // a link to the page you're already on (nav or footer) scrolls back to
+  // the top instead of reloading — a same-URL reload restores the old
+  // scroll position, so you'd never see the top of the page
+  document.querySelectorAll('a[aria-current="page"]').forEach((link) =>
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.scrollTo({ top: 0 });
+    })
+  );
+
   // Direction-aware chrome: pinned at the very top; hides once you scroll
   // down past the bar, returns on any upward scroll. A small delta filter
   // keeps it from flickering on rubber-band or trackpad jitter.
