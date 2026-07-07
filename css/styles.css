@@ -786,7 +786,9 @@ figure { margin: 0; }
   color: var(--text-4);
 }
 
-.cta__num { color: var(--text-1); }
+/* tabular figures: every digit the same width, so the headline doesn't
+   reflow on each tick of the live counters */
+.cta__num { color: var(--text-1); font-variant-numeric: tabular-nums; }
 
 .cta__sub {
   margin-top: 24px;
