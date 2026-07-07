@@ -941,3 +941,215 @@ figure { margin: 0; }
     gap: 16px;
   }
 }
+
+/* ============================================================
+   About / team page — two sections between the shared chrome.
+   Everything below is additive: new classes only, on the same
+   tokens, type roles and rhythm as the homepage.
+   ============================================================ */
+
+/* the page you're on reads in ink, like a hovered link at rest */
+.nav__link[aria-current="page"] { color: var(--text-1); }
+.nav__link[aria-current="page"] .nav__num { color: var(--text-2); }
+
+.team,
+.numbers {
+  position: relative;
+  padding-block: var(--section-gap);
+  overflow: hidden; /* the dot patches bleed off the page edges */
+}
+
+/* the opening section sits tighter under the bar, so the headline and
+   both cards land comfortably inside the first viewport */
+.team { padding-block-start: 64px; }
+
+.team .heading,
+.numbers .heading { margin-top: 24px; }
+
+/* soft halftone patches at the edges, drawn with the site's dot system */
+.about-dots {
+  position: absolute;
+  aspect-ratio: 1;
+  pointer-events: none;
+}
+
+.about-dots--a { top: 32px; right: -140px; width: min(520px, 55vw); }
+.about-dots--b { bottom: -140px; left: -180px; width: min(520px, 55vw); }
+.about-dots--c { top: 34%; right: -160px; width: min(520px, 55vw); }
+
+/* ---------- Profile cards: one card, two states ---------- */
+
+.profiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 48px;
+}
+
+/* outer shell is invisible at rest so the hover outline never shifts */
+.profile {
+  position: relative;
+  border: 1px solid transparent;
+  border-radius: 20px;
+  padding: 6px;
+  transition: border-color 140ms var(--ease-out);
+}
+
+.profile:hover,
+.profile:focus-within { border-color: var(--hairline); }
+
+.profile__card {
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: 14px;
+  padding: 6px;
+}
+
+.profile__media {
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--hairline-faint);
+  aspect-ratio: 463 / 400;
+}
+
+.profile__media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+
+.profile__meta { padding: 10px 8px 6px; }
+
+.profile__id {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.profile__num {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--text-4);
+}
+
+.profile__name {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.profile__row {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.profile__role,
+.profile__link {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.profile__link { transition: color 140ms var(--ease-out); }
+
+/* the whole card is the link */
+.profile__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.profile:hover .profile__link,
+.profile:focus-within .profile__link {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  color: var(--text-1);
+}
+
+.profile__arrow { margin-left: 6px; }
+
+/* ---------- The stats block: dashed frame, live numbers ---------- */
+
+.figures {
+  position: relative;
+  margin-top: 64px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  border: 1px dashed var(--hairline);
+}
+
+.figures__corner {
+  position: absolute;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1;
+  color: var(--text-4);
+  background: var(--canvas);
+  padding: 2px 3px;
+}
+
+.figures__corner--tl { top: -8px; left: -7px; }
+.figures__corner--tr { top: -8px; right: -7px; }
+.figures__corner--bl { bottom: -8px; left: -7px; }
+.figures__corner--br { bottom: -8px; right: -7px; }
+
+.figure {
+  grid-column: span 2;
+  padding: 24px 24px 28px;
+}
+
+.figure--wide { grid-column: span 4; }
+.figure--l { border-left: 1px dashed var(--hairline); }
+.figure--t { border-top: 1px dashed var(--hairline); }
+
+.figure__icon {
+  display: block;
+  color: var(--text-3);
+}
+
+.figure__label {
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--text-3);
+  max-width: 26ch;
+}
+
+/* the mono figure on the heading scale — smaller than the frame's PNG,
+   at the heading weight so all five cells carry the same presence */
+.figure__value {
+  margin-top: 10px;
+  font-family: var(--mono);
+  font-weight: 650;
+  font-size: clamp(32px, 3.4vw, 46px);
+  line-height: 1.12;
+  letter-spacing: -0.018em;
+}
+
+/* the one non-numeric cell: two-tone sans, same scale */
+.figure__value--trust {
+  font-family: var(--sans);
+  font-weight: 650;
+  letter-spacing: -0.018em;
+}
+
+@media (max-width: 820px) {
+  .profiles,
+  .figures { margin-top: 40px; }
+
+  .profiles { grid-template-columns: 1fr; }
+
+  .figures { grid-template-columns: 1fr; }
+
+  .figure,
+  .figure--wide { grid-column: auto; border-left: none; }
+
+  .figure + .figure { border-top: 1px dashed var(--hairline); }
+
+  .about-dots--b { display: none; }
+}
