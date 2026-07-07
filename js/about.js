@@ -4,9 +4,9 @@
 // the halftone dot patches at the section edges.
 // Module imports carry the same version as the entry script in
 // team/index.html — bump them together.
-import { initNav } from './nav.js?v=24';
-import { initReveal } from './reveal.js?v=24';
-import { clamp, easeOut, rng, fitCanvas, reducedMotion, DOT } from './util.js?v=24';
+import { initNav } from './nav.js?v=26';
+import { initReveal } from './reveal.js?v=26';
+import { clamp, easeOut, rng, fitCanvas, reducedMotion, DOT } from './util.js?v=26';
 
 const COUNT_MS = 1200;   // per-figure count-up
 const STAGGER = 150;     // block beat between figures

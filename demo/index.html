@@ -1,0 +1,116 @@
+<!doctype html>
+<!-- LeoTrace marketing site · schedule a demo — the dark inverse page -->
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
+  <title>LeoTrace — Schedule a demo</title>
+  <meta name="description" content="See LeoTrace inside your agents. Schedule a demo — for design partners and investors.">
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/styles.css?v=26">
+  <script type="module" src="/js/demo.js?v=26"></script>
+</head>
+<body id="top">
+
+  <header class="nav">
+    <button class="nav__burger" type="button" aria-expanded="false" aria-controls="nav-menu" aria-label="Menu">
+      <span></span><span></span>
+    </button>
+    <a class="wordmark" href="/">LEOTRACE<span class="cursor" aria-hidden="true"></span></a>
+    <nav class="nav__menu" id="nav-menu" aria-label="Primary">
+      <a class="nav__link" href="/team/"><span class="nav__num">01</span>The team</a>
+      <a class="nav__link" href="/mission/"><span class="nav__num">02</span>Our mission</a>
+      <a class="nav__link" href="/demo/" aria-current="page"><span class="nav__num">03</span>Schedule a demo<span class="nav__arrow">→</span></a>
+    </nav>
+  </header>
+
+  <main class="demo">
+    <canvas class="demo-dots demo-dots--left" aria-hidden="true"></canvas>
+    <canvas class="demo-dots demo-dots--right" aria-hidden="true"></canvas>
+
+    <section class="demo-section" data-section>
+      <div class="container">
+        <p class="eyebrow" data-reveal>‹› Get in touch</p>
+        <h1 class="display">
+          <span class="line"><span class="line__inner is-muted">You&rsquo;ve seen the result.</span></span>
+          <span class="line"><span class="line__inner">Now see it inside your agents.</span></span>
+        </h1>
+
+        <form class="demo-form" id="demo-form" data-reveal novalidate>
+          <fieldset class="demo-fieldset" id="demo-fieldset">
+            <div class="demo-panel">
+              <div class="demo-field" data-field="name">
+                <div class="demo-row">
+                  <label class="demo-row__label" for="f-name"><span class="demo-row__num">01</span>Name</label>
+                  <input class="demo-row__input" id="f-name" name="name" type="text" spellcheck="false" placeholder="your name" required autocomplete="name" aria-describedby="err-name">
+                </div>
+                <p class="demo-row__error" id="err-name" hidden>add your name</p>
+              </div>
+              <div class="demo-field" data-field="email">
+                <div class="demo-row">
+                  <label class="demo-row__label" for="f-email"><span class="demo-row__num">02</span>Work email</label>
+                  <input class="demo-row__input" id="f-email" name="email" type="email" spellcheck="false" placeholder="you@company.com" required autocomplete="work email" aria-describedby="err-email">
+                </div>
+                <p class="demo-row__error" id="err-email" hidden>add your work email</p>
+              </div>
+              <div class="demo-field" data-field="company">
+                <div class="demo-row">
+                  <label class="demo-row__label" for="f-company"><span class="demo-row__num">03</span>Company</label>
+                  <input class="demo-row__input" id="f-company" name="company" type="text" spellcheck="false" placeholder="company" required autocomplete="organization" aria-describedby="err-company">
+                </div>
+                <p class="demo-row__error" id="err-company" hidden>add your company</p>
+              </div>
+              <div class="demo-field">
+                <div class="demo-row">
+                  <span class="demo-row__label" id="role-label"><span class="demo-row__num">04</span>I&rsquo;m a&hellip;</span>
+                  <div class="demo-chips" role="radiogroup" aria-labelledby="role-label" id="role-group">
+                    <button class="demo-chip" type="button" role="radio" aria-checked="false" data-role="security_leader">Security leader</button>
+                    <button class="demo-chip" type="button" role="radio" aria-checked="false" data-role="investor">Investor</button>
+                    <button class="demo-chip" type="button" role="radio" aria-checked="false" data-role="other">Other</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- honeypot: hidden from people (visually + tab order + AT).
+                 Bots that fill it are dropped client-side; the backend
+                 should also reject any payload where `website` is set. -->
+            <div class="demo-hp" aria-hidden="true">
+              <label for="f-website">Website</label>
+              <input id="f-website" name="website" type="text" tabindex="-1" autocomplete="off">
+            </div>
+
+            <button class="btn btn--solid demo-submit" type="submit" id="demo-submit">Schedule a demo<span class="btn__glyph">→</span></button>
+          </fieldset>
+          <p class="demo-fail" id="demo-fail" role="alert" hidden>something went wrong. try again.</p>
+          <p class="demo-note">For design partners and investors.</p>
+        </form>
+
+        <div class="demo-success" id="demo-success" role="status" hidden>
+          <p class="demo-success__title">You&rsquo;re on the grid.</p>
+          <p class="demo-success__sub">We&rsquo;ll be in touch shortly.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__row footer__row--nav">
+      <a class="wordmark" href="/">LEOTRACE<span class="cursor" aria-hidden="true"></span></a>
+      <nav class="footer__nav" aria-label="Footer">
+        <a class="nav__link" href="/team/"><span class="nav__num">01</span>The team</a>
+        <a class="nav__link" href="/mission/"><span class="nav__num">02</span>Our mission</a>
+        <a class="nav__link" href="/demo/" aria-current="page"><span class="nav__num">03</span>Schedule a demo</a>
+        <a class="nav__link" href="/privacy/"><span class="nav__num">04</span>Privacy policy</a>
+        <a class="nav__link" href="https://www.linkedin.com/company/leotrace" rel="noopener"><span class="nav__num">05</span>LinkedIn<span class="nav__arrow">→</span></a>
+      </nav>
+    </div>
+    <div class="footer__row footer__row--legal">
+      <span class="footer__copyright">© 2026 LeoTrace. All rights reserved.</span>
+    </div>
+  </footer>
+
+</body>
+</html>

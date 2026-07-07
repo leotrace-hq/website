@@ -4,9 +4,9 @@
 // radially. Static; nothing animates beyond the shared reveal.
 // Module imports carry the same version as the entry script in
 // privacy/index.html — bump them together.
-import { initNav } from './nav.js?v=24';
-import { initReveal } from './reveal.js?v=24';
-import { clamp, rng, fitCanvas, DOT } from './util.js?v=24';
+import { initNav } from './nav.js?v=26';
+import { initReveal } from './reveal.js?v=26';
+import { clamp, rng, fitCanvas, DOT } from './util.js?v=26';
 
 function drawGrid(canvas, seed) {
   const { ctx, w, h } = fitCanvas(canvas);
