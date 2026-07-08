@@ -1578,3 +1578,255 @@ figure { margin: 0; }
 
   .demo-dots { width: 22vw; }
 }
+
+/* ============================================================
+   Team page v2 — intro + memo, the pivot line + stats board
+   (Figma 134-274). Assembled from existing roles and tokens.
+   ============================================================ */
+
+.team .display {
+  margin-top: 24px;
+  max-width: 12.4em; /* breaks the grey clause before "how", per the frame */
+}
+
+/* the intro owns the first viewport, content centred under the bar */
+.team {
+  display: flex;
+  align-items: center;
+  min-height: calc(100vh - var(--nav-h));
+  min-height: calc(100svh - var(--nav-h));
+  padding-block: 48px;
+}
+
+/* the memo: paragraph 1 left, paragraph 2 right */
+.memo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(32px, 4vw, 48px);
+  margin-top: 48px;
+}
+
+/* the pivot statement: the grey clause hands over to the black payoff */
+.pivot__line { max-width: 21em; }
+
+.pivot__muted { color: var(--text-3); }
+
+.pivot .figures { margin-top: 40px; }
+
+/* stats cell: two-tone stacked figure + mono-caps sub-label */
+.figure__duo {
+  display: flex;
+  flex-direction: column;
+}
+
+.figure__caps {
+  margin-top: 20px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 18px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  max-width: 32ch;
+}
+
+@media (max-width: 820px) {
+  .memo {
+    grid-template-columns: 1fr;
+    margin-top: 32px;
+  }
+}
+
+/* ============================================================
+   Team page — founder quotes: a pinned sequence. The card grows
+   in, the quote resolves, then a fast flick swaps Florian for
+   Patrick on one horizontal track. (Figma 134-274, frames
+   Florian/Patrick Example.)
+   ============================================================ */
+
+.quotes {
+  position: relative;
+  height: 260vh; /* the pin runway: hold → swap → hold */
+}
+
+.quotes__sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.quotes__dots {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.quotes__viewport {
+  position: relative;
+  width: 100%;
+  overflow: hidden; /* the waiting card never peeks; the flick is masked */
+  border-radius: 14px;
+  will-change: transform;
+}
+
+/* one static stage: the card never moves — the content slides through */
+.quote-card {
+  min-height: 520px;
+  overflow: hidden;
+  padding: 40px clamp(32px, 8.6vw, 124px);
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: 14px;
+  display: flex;
+  align-items: stretch;
+}
+
+.quote-flow {
+  display: flex;
+  gap: 200px;
+  width: 100%;
+  will-change: transform;
+}
+
+.quote-item {
+  flex: 0 0 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 40px;
+}
+
+.quote-card blockquote { margin: 0; }
+
+/* only the mark is grey — the quote stays ink */
+.quote-card__mark {
+  font-weight: 650;
+  font-size: 56px;
+  line-height: 0.55;
+  color: var(--text-4);
+}
+
+.quote-card__text {
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 32px;
+  color: var(--text-1);
+  max-width: 872px;
+}
+
+.quote-card__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.quote-card__avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--hairline-faint);
+}
+
+.quote-card__id {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+}
+
+.quote-card__name {
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.quote-card__role {
+  font-family: var(--mono);
+  font-size: 16px;
+  line-height: 24px;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.quote-card__count {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 18px;
+  line-height: 32px;
+  letter-spacing: 0.08em;
+  color: var(--text-2);
+}
+
+/* the quote resolves once its card is live — fade-and-rise, staggered
+   in reading order; one-shot (is-live is never removed) */
+@media (prefers-reduced-motion: no-preference) {
+  /* the first quote resolves as the card lands; after that the content
+     rides the scrubbed flow, nothing fades */
+  .quote-item .quote-card__mark,
+  .quote-item .quote-card__text,
+  .quote-item .quote-card__row {
+    opacity: 0;
+    transform: translateY(16px);
+    transition:
+      opacity var(--reveal-dur) var(--reveal-ease),
+      transform var(--reveal-dur) var(--reveal-ease);
+  }
+
+  .quote-item .quote-card__text { transition-delay: 120ms; }
+  .quote-item .quote-card__row { transition-delay: 260ms; }
+
+  .quote-item.is-live .quote-card__mark,
+  .quote-item.is-live .quote-card__text,
+  .quote-item.is-live .quote-card__row {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* reduced motion: no pin, no grow, no flick — both quotes stacked,
+   fully resolved */
+@media (prefers-reduced-motion: reduce) {
+  .quotes { height: auto; padding-block: var(--section-gap); }
+
+  .quotes__sticky {
+    position: static;
+    height: auto;
+    overflow: visible;
+  }
+
+  .quote-card { min-height: 0; }
+
+  .quote-flow {
+    display: block;
+    transform: none !important;
+  }
+
+  .quote-item + .quote-item { margin-top: 56px; }
+}
+
+@media (max-width: 820px) {
+  .quotes { height: 300vh; }
+
+  .quote-card {
+    min-height: 0;
+    padding: 32px 24px;
+    gap: 28px;
+  }
+
+  .quote-card__text {
+    font-size: 19px;
+    line-height: 28px;
+  }
+
+  .quote-card__avatar { width: 56px; height: 56px; }
+
+  .quote-card__count { font-size: 14px; }
+}

@@ -3,9 +3,9 @@
 // submit states, and the backend seam.
 // Module imports carry the same version as the entry script in
 // demo/index.html — bump them together.
-import { initNav } from './nav.js?v=26';
-import { initReveal } from './reveal.js?v=26';
-import { clamp, rng, fitCanvas, whileVisible, reducedMotion } from './util.js?v=26';
+import { initNav } from './nav.js?v=31';
+import { initReveal } from './reveal.js?v=31';
+import { clamp, rng, fitCanvas, whileVisible, reducedMotion } from './util.js?v=31';
 
 /* ============================================================
    Backend seam
