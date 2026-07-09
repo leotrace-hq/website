@@ -8,7 +8,7 @@
 // edges, so the camera matches the blueprint. This file builds the STATIC
 // resting composition; the load-in animation is added separately.
 
-import { clamp, rng, fitCanvas, whileVisible, reducedMotion, DOT } from './util.js';
+import { clamp, easeOut, rng, fitCanvas, whileVisible, reducedMotion, DOT } from './util.js';
 
 // --- projection: symmetric shallow isometric. Both axes ~27° below the
 //     horizontal (|dy/dx| = 0.45/0.89 ≈ 0.5), so squares read as a clean,
@@ -24,7 +24,7 @@ const CANDIDATES = [
   { c: -1, r: -2 }, { c: 1, r: -2 }, { c: 2, r: -1 },
 ];
 
-const KNIGHT_SRC = 'assets/knight.png?v=32';
+const KNIGHT_SRC = 'assets/knight.png?v=33';
 
 export function initHero() {
   const hero = document.getElementById('hero');
@@ -33,14 +33,14 @@ export function initHero() {
 
   const img = new Image();
   let imgReady = false;
-  img.onload = () => { imgReady = true; scene && scene.render(); };
+  img.onload = () => { imgReady = true; scene && scene.redraw(); };
   img.src = KNIGHT_SRC;
 
   const scene = run(hero, canvas, () => imgReady ? img : null);
 
   // fonts must be ready before the label text measures/renders crisply
   if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(() => scene.render());
+    document.fonts.ready.then(() => scene.redraw());
   }
 }
 
@@ -94,6 +94,14 @@ function run(hero, canvas, getImg) {
     S(c + 0.5, r + 0.5), S(c - 0.5, r + 0.5),
   ];
 
+  // half-size diamond centred in a cell — the target boxes use this so all
+  // eight read as small, uniform, centred boxes (declutters the board)
+  const HALF = 0.25;
+  const halfQuad = (c, r) => [
+    S(c - HALF, r - HALF), S(c + HALF, r - HALF),
+    S(c + HALF, r + HALF), S(c - HALF, r + HALF),
+  ];
+
   // distance falloff (board units) -> 0..1, dense near knight, gone at edge
   function fade(c, r) {
     const d = Math.hypot(c, r);
@@ -134,8 +142,16 @@ function run(hero, canvas, getImg) {
     }
   }
 
-  function drawBoard() {
-    const { ctx, w, h } = V;
+  // The board is static — build its bitmap once and blit it each frame (the
+  // per-frame path animation must not rebuild this heavy dot field).
+  let boardCache = null;
+  function blitBoard() {
+    if (!boardCache) boardCache = buildBoard();
+    V.ctx.drawImage(boardCache, 0, 0, V.w, V.h);
+  }
+
+  function buildBoard() {
+    const { w, h } = V;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const off = document.createElement('canvas');
     off.width = Math.round(w * dpr);
@@ -172,7 +188,7 @@ function run(hero, canvas, getImg) {
       }
     }
     fadeBoardEdges(cx);
-    ctx.drawImage(off, 0, 0, w, h);
+    return off;
   }
 
   // Dissolve the board into white with gradient masks on all four sides —
@@ -199,136 +215,163 @@ function run(hero, canvas, getImg) {
     cx.restore();
   }
 
-  // dotted line between two board points, sampled at fixed screen spacing
-  function dottedLine(p0, p1, { gap, sz, tone, alpha }) {
+  // ============================================================
+  //  Move-paths + targets layer (drawn between board and knight)
+  // ============================================================
+  // The eight legal knight L-moves. SECURED (1,2) is the black move with the
+  // full telemetry target; the other seven are subordinate grey candidates.
+  // Colour discipline: black = secured path + target ONLY, everything else grey.
+  const MOVES = [SECURED, ...CANDIDATES];
+  const PATH = { black: '#141415', grey: '#8a8a8a' }; // candidates lighter/fainter
+  const isSecured = (m) => m.c === SECURED.c && m.r === SECURED.r;
+
+  // Per-move dogleg routing TRACED from the reference (asymmetric — not a
+  // symmetric fan). 'r' = go along the row axis first then the column; 'c' =
+  // column axis first then row. (2,1) is a bespoke staircase per the drawing.
+  const ROUTES = {
+    '1,2': 'r', '-1,2': 'r', '-2,1': 'r',
+    '2,-1': 'r', '1,-2': 'r', '-1,-2': 'r', '-2,-1': 'c',
+  };
+  // explicit waypoint routes (board coords) where a simple dogleg is wrong
+  const STAIR = { '2,1': [[0, 0], [1, 0], [1, 1], [2, 1]] };
+  const sign = (v) => (v > 0 ? 1 : v < 0 ? -1 : 0);
+  // the secured box is the larger, primary marker; candidates stay small + quiet
+  const boxHalf = (m) => (isSecured(m) ? 0.26 : 0.19);
+  const boxQuad = (c, r, h) => [S(c - h, r - h), S(c + h, r - h), S(c + h, r + h), S(c - h, r + h)];
+
+  // route waypoints; the final point stops at the target box's near EDGE
+  // (boxHalf back from the cell centre) so the path meets the box cleanly.
+  function legPoints(m) {
+    const h = boxHalf(m);
+    const key = m.c + ',' + m.r;
+    if (STAIR[key]) {
+      const w = STAIR[key].map(([c, r]) => ({ c, r }));
+      const a = w[w.length - 2], b = w[w.length - 1];
+      if (a.r === b.r) b.c -= h * sign(b.c - a.c); else b.r -= h * sign(b.r - a.r);
+      return w;
+    }
+    if (ROUTES[key] === 'r') {
+      return [{ c: 0, r: 0 }, { c: 0, r: m.r }, { c: m.c - h * sign(m.c), r: m.r }];
+    }
+    return [{ c: 0, r: 0 }, { c: m.c, r: 0 }, { c: m.c, r: m.r - h * sign(m.r) }];
+  }
+
+  // ordered board-space dots along the dogleg, from the knight outward, at a
+  // pitch that carries the board's dot language + foreshortens with it. This
+  // ordering IS the animation structure: reveal dots 0..k to draw a path out.
+  function pathSamples(m) {
+    const pts = legPoints(m);
+    const out = [];
+    const PP = isSecured(m) ? 0.07 : 0.09; // bigger, evenly-spaced dots (clear gaps)
+    for (let s = 0; s < pts.length - 1; s++) {
+      const a = pts[s], b = pts[s + 1];
+      const seg = Math.hypot(b.c - a.c, b.r - a.r);
+      const n = Math.max(1, Math.round(seg / PP));
+      for (let i = s === 0 ? 0 : 1; i <= n; i++) {
+        const t = i / n;
+        out.push({ c: a.c + (b.c - a.c) * t, r: a.r + (b.r - a.r) * t });
+      }
+    }
+    return out; // index 0 = at the knight, last = at the target
+  }
+
+  // animation-ready structure: each move carries its ordered dot list
+  let PATHS = null;
+  const buildPaths = () => { PATHS = MOVES.map((m) => ({ m, secured: isSecured(m), dots: pathSamples(m) })); };
+
+  function edgeDotRun(a, b, colour, sz) {
     const { ctx } = V;
-    const a = S(p0.c, p0.r), b = S(p1.c, p1.r);
-    const len = Math.hypot(b.x - a.x, b.y - a.y);
-    const steps = Math.max(1, Math.round(len / gap));
-    ctx.fillStyle = tone;
-    for (let i = 0; i <= steps; i++) {
-      const t = i / steps;
-      const x = a.x + (b.x - a.x) * t;
-      const y = a.y + (b.y - a.y) * t;
-      ctx.globalAlpha = alpha(t) * xFade(x);
+    const n = Math.max(2, Math.round(Math.hypot(b.x - a.x, b.y - a.y) / 6));
+    ctx.fillStyle = colour;
+    for (let i = 0; i <= n; i++) {
+      const x = a.x + (b.x - a.x) * i / n, y = a.y + (b.y - a.y) * i / n;
       ctx.fillRect(x - sz / 2, y - sz / 2, sz, sz);
     }
-    ctx.globalAlpha = 1;
   }
 
-  // dogleg L-route: long axis first, then the short step
-  function legPoints(m) {
-    if (Math.abs(m.r) === 2) return [{ c: 0, r: 0 }, { c: 0, r: m.r }, { c: m.c, r: m.r }];
-    return [{ c: 0, r: 0 }, { c: m.c, r: 0 }, { c: m.c, r: m.r }];
-  }
-
-  function drawCandidatePaths() {
+  // one move's dots + target box. `reveal` (0..1) = fraction of the ordered
+  // path drawn from the knight; `targetOp` (0..1) fades the target in once the
+  // path has reached it.
+  function drawMove(p, reveal, targetOp) {
     const { ctx } = V;
-    const sz = Math.max(1, dotPx());
-    for (const m of CANDIDATES) {
-      const f = smooth(fade(m.c, m.r));
-      if (f <= 0.04) continue;
-      const pts = legPoints(m);
-      for (let i = 0; i < pts.length - 1; i++) {
-        dottedLine(pts[i], pts[i + 1], {
-          gap: 12, sz: sz + 0.6, tone: DOT.mid,
-          alpha: () => 0.9 * f,
-        });
+    const colour = p.secured ? PATH.black : PATH.grey;
+    const psz = p.secured ? 3.0 : 2.4;   // bigger dots
+    const nShow = Math.round(p.dots.length * clamp(reveal, 0, 1));
+    ctx.fillStyle = colour;
+    for (let i = 0; i < nShow; i++) {
+      const s = S(p.dots[i].c, p.dots[i].r);
+      ctx.fillRect(s.x - psz / 2, s.y - psz / 2, psz, psz);
+    }
+    if (targetOp <= 0.001) return;
+    ctx.globalAlpha = clamp(targetOp, 0, 1);
+    // target box: half-size diamond centred in the destination cell. The
+    // secured box is larger + carries full telemetry; candidates stay small.
+    const q = boxQuad(p.m.c, p.m.r, boxHalf(p.m));
+    for (let e = 0; e < 4; e++) edgeDotRun(q[e], q[(e + 1) % 4], colour, p.secured ? 2.6 : 1.8);
+    const centre = S(p.m.c, p.m.r);
+    if (p.secured) {
+      ctx.strokeStyle = PATH.black;
+      ctx.lineWidth = 2.5;
+      const arm = 0.34;
+      for (let i = 0; i < 4; i++) {
+        const cur = q[i], prev = q[(i + 3) % 4], next = q[(i + 1) % 4];
+        ctx.beginPath();
+        ctx.moveTo(cur.x + (prev.x - cur.x) * arm, cur.y + (prev.y - cur.y) * arm);
+        ctx.lineTo(cur.x, cur.y);
+        ctx.lineTo(cur.x + (next.x - cur.x) * arm, cur.y + (next.y - cur.y) * arm);
+        ctx.stroke();
       }
-      // faint ghost destination square (dotted outline)
-      ghostSquare(m.c, m.r, 0.7 * f);
-    }
-  }
-
-  function ghostSquare(c, r, alpha) {
-    const { ctx } = V;
-    const q = quad(c, r);
-    const sz = Math.max(1, dotPx());
-    ctx.fillStyle = DOT.mid;
-    for (let e = 0; e < 4; e++) {
-      const a = q[e], b = q[(e + 1) % 4];
-      const len = Math.hypot(b.x - a.x, b.y - a.y);
-      const steps = Math.max(1, Math.round(len / 11));
-      for (let i = 0; i < steps; i++) {
-        const t = i / steps;
-        const x = a.x + (b.x - a.x) * t;
-        const y = a.y + (b.y - a.y) * t;
-        ctx.globalAlpha = alpha * xFade(x);
-        ctx.fillRect(x, y, sz, sz);
-      }
-    }
-    ctx.globalAlpha = 1;
-  }
-
-  function drawSecured() {
-    const { ctx } = V;
-    const sz = dotPx() + 1; // weightier
-    const pts = legPoints(SECURED);
-    for (let i = 0; i < pts.length - 1; i++) {
-      dottedLine(pts[i], pts[i + 1], {
-        gap: 11, sz, tone: DOT.dark,
-        alpha: (t) => 0.85 + 0.15 * t,
-      });
-    }
-    drawTargetMarker(SECURED.c, SECURED.r);
-    drawLabel(SECURED.c, SECURED.r);
-  }
-
-  // corner-tick brackets at the square's corners + solid centre dot
-  function drawTargetMarker(c, r) {
-    const { ctx } = V;
-    const q = quad(c, r);
-    const centre = S(c, r);
-    ctx.strokeStyle = DOT.dark;
-    ctx.lineWidth = 1.5;
-    const armFrac = 0.34;
-    for (let i = 0; i < 4; i++) {
-      const cur = q[i];
-      const prev = q[(i + 3) % 4];
-      const next = q[(i + 1) % 4];
-      const toPrev = { x: (prev.x - cur.x) * armFrac, y: (prev.y - cur.y) * armFrac };
-      const toNext = { x: (next.x - cur.x) * armFrac, y: (next.y - cur.y) * armFrac };
+      ctx.fillStyle = PATH.black;
       ctx.beginPath();
-      ctx.moveTo(cur.x + toPrev.x, cur.y + toPrev.y);
-      ctx.lineTo(cur.x, cur.y);
-      ctx.lineTo(cur.x + toNext.x, cur.y + toNext.y);
-      ctx.stroke();
+      ctx.arc(centre.x, centre.y, 3.6, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = colour;
+      ctx.beginPath();
+      ctx.arc(centre.x, centre.y, 1.6, 0, Math.PI * 2);
+      ctx.fill();
     }
-    // centre dot
-    ctx.fillStyle = DOT.dark;
-    ctx.beginPath();
-    ctx.arc(centre.x, centre.y, Math.max(3, V.unit / 15), 0, Math.PI * 2);
-    ctx.fill();
+    ctx.globalAlpha = 1;
   }
 
-  function drawLabel(c, r) {
+  // full paths layer, driven by the animation `state`. Candidates draw together,
+  // then the secured path, then the secured label (see ANIM timeline).
+  function drawPaths(st) {
+    if (!PATHS) buildPaths();
     const { ctx } = V;
-    const q = quad(c, r);
-    // anchor: right corner of the target square, then out to the right
-    const right = q[1];
-    const lx = right.x + 34;
-    const ly = right.y + 4;
-    // leader line from square's right corner to the label
-    ctx.strokeStyle = DOT.dark;
+    ctx.save();
+    // dots sit directly on the board (no white lanes). Grey candidates first,
+    // secured last so it stays on top.
+    for (const p of PATHS) if (!p.secured) drawMove(p, st.candReveal, st.candTargetOp);
+    const sec = PATHS.find((p) => p.secured);
+    if (sec) drawMove(sec, st.secReveal, st.secTargetOp);
+    if (st.labelOp > 0.001) drawSecuredLabel(st.labelOp);
+    ctx.restore();
+  }
+
+  function drawSecuredLabel(op) {
+    const { ctx } = V;
+    ctx.globalAlpha = clamp(op, 0, 1);
+    const right = boxQuad(SECURED.c, SECURED.r, boxHalf(SECURED))[1];
+    const lx = right.x + 34, ly = right.y + 4;
+    ctx.strokeStyle = PATH.black;
     ctx.lineWidth = 1;
-    ctx.globalAlpha = 0.9;
     ctx.beginPath();
-    ctx.moveTo(right.x + 6, right.y);
+    ctx.moveTo(right.x + 8, right.y);
     ctx.lineTo(lx - 8, ly - 4);
     ctx.stroke();
-    ctx.globalAlpha = 1;
-
     ctx.textBaseline = 'alphabetic';
     ctx.textAlign = 'left';
     ctx.letterSpacing = '2px';
-    ctx.fillStyle = DOT.dark;
+    ctx.fillStyle = PATH.black;
     ctx.font = '600 13px "Geist Mono", ui-monospace, monospace';
     ctx.fillText('SECURED MOVE', lx, ly);
     ctx.letterSpacing = '1px';
-    ctx.fillStyle = '#737373'; // --text-3
+    ctx.fillStyle = '#737373';
     ctx.font = '400 10px "Geist Mono", ui-monospace, monospace';
     ctx.fillText('NEXT. BEST. MOVE.', lx, ly + 17);
     ctx.letterSpacing = '0px';
+    ctx.globalAlpha = 1;
   }
 
   function drawKnight() {
@@ -348,21 +391,56 @@ function run(hero, canvas, getImg) {
     ctx.drawImage(img, x, y, kW, kH);
   }
 
-  function render() {
+  function render(st) {
     if (!V) measure();
     const { ctx, w, h } = V;
     ctx.clearRect(0, 0, w, h);
-    drawBoard();
-    // paths + secured marker/label deferred until the board geometry is
-    // approved (drawCandidatePaths / drawSecured)
-    drawKnight();
+    blitBoard();               // static board (cached bitmap)
+    drawPaths(st);             // animated paths + targets + label
+    drawKnight();              // on top, occludes the path behind its base
   }
 
+  // --- draw-out animation (plays once, AFTER the title has animated in) ---
+  //   candidates draw together -> their targets resolve -> the secured path
+  //   draws last -> the secured target -> the SECURED MOVE label, last of all.
+  const EMPTY = { candReveal: 0, candTargetOp: 0, secReveal: 0, secTargetOp: 0, labelOp: 0 };
+  const FULL = { candReveal: 1, candTargetOp: 1, secReveal: 1, secTargetOp: 1, labelOp: 1 };
+  const TITLE_IN = 1400;   // ms — hold until the headline cascade has landed
+  const ANIM_END = 2600;   // ms — total length of the board sequence
+  const rmp = (ms, s, d) => clamp((ms - s) / d, 0, 1);
+  function stateAt(ms) {
+    return {
+      candReveal: easeOut(rmp(ms, 0, 780)),        // 7 candidate paths, together
+      candTargetOp: smooth(rmp(ms, 780, 240)),     // their targets resolve
+      secReveal: easeOut(rmp(ms, 1150, 640)),      // secured path draws, last
+      secTargetOp: smooth(rmp(ms, 1810, 240)),     // secured target
+      labelOp: smooth(rmp(ms, 2120, 440)),         // SECURED MOVE label, last of all
+    };
+  }
+
+  let animState = EMPTY;
+  const redraw = () => render(animState);
+
   measure();
-  render();
+  render(animState);           // board + knight; paths hidden until the title lands
 
-  window.addEventListener('resize', () => { measure(); render(); });
-  whileVisible(canvas, (vis) => { if (vis) render(); });
+  window.addEventListener('resize', () => { boardCache = null; measure(); render(animState); });
+  whileVisible(canvas, (vis) => { if (vis) render(animState); });
 
-  return { render };
+  if (reducedMotion()) {
+    animState = FULL;
+    render(animState);
+  } else {
+    let t0 = -1;
+    const frame = (now) => {
+      if (t0 < 0) t0 = now;
+      const t = now - t0;
+      animState = t >= ANIM_END ? FULL : stateAt(t);
+      render(animState);
+      if (t < ANIM_END) requestAnimationFrame(frame);
+    };
+    setTimeout(() => requestAnimationFrame(frame), TITLE_IN);
+  }
+
+  return { redraw };
 }
