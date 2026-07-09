@@ -340,16 +340,12 @@ figure { margin: 0; }
   /* the translucent bar overlays the hero, so the hero owns the full
      viewport and its content centres on the screen, not below the bar */
   margin-top: calc(-1 * var(--nav-h));
-  /* pinned: the extra length is the scrub for the Queen's two moves —
-     the page only releases once the second move completes */
-  height: 260vh;
+  height: 100vh;
+  height: 100svh;
 }
 
 .hero__sticky {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  height: 100svh;
+  height: 100%;
   display: flex;
   align-items: center;
   overflow: hidden;
@@ -361,11 +357,6 @@ figure { margin: 0; }
   width: 100%;
   height: 100%;
   pointer-events: none;
-}
-
-/* reduced motion: no pinned sequence — one full-viewport still */
-@media (prefers-reduced-motion: reduce) {
-  .hero { height: auto; }
 }
 
 .hero__content {
