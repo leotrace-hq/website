@@ -10,8 +10,8 @@
 import { clamp, lerp, easeOut, rng, fitCanvas, whileVisible, reducedMotion, DOT } from './util.js';
 
 const LAP_MS = 10000;      // one full orbit of the timer head
-const RING_DELAY = 650;    // after the section enters — the words land first
-const SETTLE_MS = 1400;    // dissolve stagger + per-dot settle, then the orbit
+const ASSEMBLE_END = 0.7;  // the band is fully assembled by this fraction of
+                           // the pin; the remainder holds while the head orbits
 const HEAD_DOTS = 4;       // visible length of the timer head
 
 // reference geometry (380px box, halved): scaled by the actual canvas
@@ -79,11 +79,13 @@ export function initResults() {
 
   let ring = build(canvas);
 
-  // elapsed < 0 → resolved instantly (reduced-motion, resize-after-settle)
-  function drawBand(elapsed) {
+  // a: 0..1 assembly fraction driven by the pin scroll (a < 0 → resolved
+  // instantly, for reduced-motion / resize-after-settle). Each dot flies
+  // in over a 0.4-wide window, staggered by its lag across the first 0.6.
+  function drawBand(a) {
     const { ctx, band, dotR } = ring;
     for (const d of band) {
-      const dissolve = elapsed < 0 ? 1 : easeOut(clamp((elapsed - d.lag * 500) / 450, 0, 1));
+      const dissolve = a < 0 ? 1 : easeOut(clamp((a - d.lag * 0.6) / 0.4, 0, 1));
       if (dissolve <= 0) continue;
       const tone = bandStyle(d.f);
       ctx.globalAlpha = tone.alpha * dissolve;
@@ -127,91 +129,52 @@ export function initResults() {
     return;
   }
 
-  let started = false;  // the section entered + the copy is underway
-  let t0 = -1;          // ring clock: set on the first drawn frame
-  let spinT0 = -1;      // lap clock: starts once the band has settled
+  let cur = -1;         // eased pin progress
+  let spinT0 = -1;      // orbit clock: starts once the band has assembled
   let visible = false;
   let rafId = 0;
 
-  // the scroll gate: while the entrance plays, the page can't be
-  // scrolled past the section — downward wheel input at the pin's end
-  // is swallowed and any overshoot (keyboard, scrollbar drag, momentum)
-  // is clamped back. The section is sticky-pinned on desktop, so the
-  // frame the user sees holds perfectly still while the gate works.
-  // Released the moment the orbit starts, with a failsafe in case the
-  // tab loses rAF mid-entrance. Never engaged on the stacked mobile
-  // layout (no pin — clamping there visibly fights the scroll), under
-  // reduced motion (this branch is unreachable then), or when arriving
-  // from below, so it can't yank the page upward.
-  let gateOn = false;
-  const gateLimit = () =>
-    window.scrollY + section.getBoundingClientRect().bottom - window.innerHeight;
-  const onGateWheel = (e) => {
-    if (e.deltaY > 0 && window.scrollY >= gateLimit() - 1) e.preventDefault();
-  };
-  const onGateScroll = () => {
-    const max = gateLimit();
-    if (window.scrollY > max) window.scrollTo({ top: max, behavior: 'instant' });
-  };
-  function releaseGate() {
-    if (!gateOn) return;
-    gateOn = false;
-    window.removeEventListener('wheel', onGateWheel);
-    window.removeEventListener('scroll', onGateScroll);
-  }
-  function engageGate() {
-    if (!window.matchMedia('(min-width: 821px)').matches) return; // pinned layout only
-    if (window.scrollY > gateLimit()) return; // came from below — don't yank
-    gateOn = true;
-    window.addEventListener('wheel', onGateWheel, { passive: false });
-    window.addEventListener('scroll', onGateScroll, { passive: true });
-    setTimeout(releaseGate, 4000);
+  function progress() {
+    const r = section.getBoundingClientRect();
+    const scrollable = r.height - window.innerHeight;
+    return scrollable > 0 ? clamp(-r.top / scrollable, 0, 1) : 1;
   }
 
+  // The ring is scrubbed by the pin: scrolling assembles the band from
+  // its scattered particles, so the user's input IS the progress — never
+  // gated, clamped, or discarded (no wheel/scrollTo handlers at all). The
+  // pin holds the frame still while the band forms; once it has settled
+  // (a >= 1) the timer head orbits on its own 10s clock. Fully
+  // scrollable-through in both directions; reverses as you scroll back.
   function frame(now) {
     rafId = 0;
-    if (!visible || !started) return;
-    if (t0 < 0) t0 = now;
-    const elapsed = now - t0;
+    if (!visible) return;
+    const target = progress();
+    cur = cur < 0 ? target : cur + (target - cur) * 0.15;
+    if (Math.abs(cur - target) < 0.001) cur = target;
+    const a = clamp(cur / ASSEMBLE_END, 0, 1);
 
     ring.ctx.clearRect(0, 0, ring.w, ring.h);
-    drawBand(elapsed);
-
-    if (elapsed >= SETTLE_MS) {
-      if (spinT0 < 0) {
-        spinT0 = now;
-        releaseGate(); // the band has settled — the page may move on
-      }
+    drawBand(a);
+    if (a >= 1) {
+      if (spinT0 < 0) spinT0 = now;
       drawTimer(((now - spinT0) % LAP_MS) / LAP_MS);
+    } else {
+      spinT0 = -1; // scrubbed back below the settle point — rearm the orbit
     }
-
     rafId = requestAnimationFrame(frame);
   }
 
-  // same trigger line as the shared reveal (reveal.js), so the ring's
-  // delay is measured from the moment the copy starts — one-shot
-  const io = new IntersectionObserver(
-    (entries) => {
-      if (!entries[0].isIntersecting) return;
-      io.disconnect();
-      engageGate();
-      setTimeout(() => {
-        started = true;
-        if (visible && !rafId) rafId = requestAnimationFrame(frame);
-      }, RING_DELAY);
-    },
-    { threshold: 0, rootMargin: '0px 0px -35% 0px' }
-  );
-  io.observe(section);
+  const wake = () => { if (!rafId && visible) rafId = requestAnimationFrame(frame); };
 
-  // the orbit sleeps off-screen and resumes when scrolled back
-  whileVisible(canvas, (v) => {
-    visible = v;
-    if (v && started && !rafId) rafId = requestAnimationFrame(frame);
-  });
+  // sleeps off-screen, resumes on return
+  whileVisible(canvas, (v) => { visible = v; wake(); });
 
   window.addEventListener('resize', () => {
     ring = build(canvas);
-    if (started && !visible && t0 >= 0) drawResolved(0);
+    cur = -1;
+    wake();
   });
+
+  wake();
 }
