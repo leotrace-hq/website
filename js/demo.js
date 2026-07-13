@@ -3,15 +3,20 @@
 // submit states, and the backend seam.
 // Module imports carry the same version as the entry script in
 // demo/index.html — bump them together.
-import { initNav } from './nav.js?v=31';
-import { initReveal } from './reveal.js?v=31';
-import { clamp, rng, fitCanvas, whileVisible, reducedMotion } from './util.js?v=31';
+import { initNav } from './nav.js?v=37';
+import { initReveal } from './reveal.js?v=37';
+import { clamp, rng, fitCanvas, whileVisible, reducedMotion } from './util.js?v=37';
 
 /* ============================================================
    Backend seam
    ============================================================ */
 
-const DEMO_ENDPOINT = '/api/demo-request'; // BACKEND: point this at your handler
+const DEMO_ENDPOINT = 'https://api.web3forms.com/submit';
+
+// Web3Forms delivers each submission as an email to info@leotrace.io.
+// The access key is public by design (safe in client code): it only
+// routes to the verified inbox and grants no read access.
+const WEB3FORMS_ACCESS_KEY = '844cc3dd-4e3a-4037-b5a9-8e5b8c3435df';
 
 // Payload shape:
 //   {
@@ -21,7 +26,7 @@ const DEMO_ENDPOINT = '/api/demo-request'; // BACKEND: point this at your handle
 //     role: "security_leader" | "investor" | "other" | null
 //   }
 // The hidden honeypot field (`website`) is dropped client-side when
-// filled, but check it server-side too and reject any payload carrying it.
+// filled, so bot submissions never reach the endpoint.
 //
 // Response contract: any 2xx → success (the page shows the success
 // state). Anything else, or a network error → error state: the button
@@ -30,8 +35,13 @@ const DEMO_ENDPOINT = '/api/demo-request'; // BACKEND: point this at your handle
 async function submitDemoRequest(payload) {
   const res = await fetch(DEMO_ENDPOINT, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({
+      access_key: WEB3FORMS_ACCESS_KEY,
+      subject: 'New demo request — leotrace.io',
+      from_name: 'leotrace.io',
+      ...payload,
+    }),
   });
   return res.ok;
 }
