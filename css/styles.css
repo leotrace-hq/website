@@ -880,13 +880,20 @@ figure { margin: 0; }
     --nav-h: 72px; /* burger row: 32px + 20px padding ×2 */
   }
 
-  /* logo + left-aligned hamburger */
+  /* wordmark left, hamburger right */
   .nav {
-    justify-content: flex-start;
+    justify-content: space-between;
     gap: 16px;
   }
 
-  .nav__burger { display: flex; }
+  /* burger is first in the DOM (for focus order); push it to the right edge */
+  .nav__burger {
+    display: flex;
+    order: 1;
+    width: 44px;
+    height: 44px;
+    margin: -6px 0; /* keep the 44px tap target without growing the bar height */
+  }
 
   .nav__menu {
     display: none;
@@ -940,7 +947,8 @@ figure { margin: 0; }
     inset: auto;
     order: 2;
     width: 100%;
-    height: clamp(220px, 32svh, 320px);
+    /* a taller band so the board carries real weight below the copy */
+    height: clamp(300px, 42svh, 400px);
   }
 
   /* the desktop size is for the wide frame; on mobile the headline steps
@@ -1614,7 +1622,8 @@ figure { margin: 0; }
 
   .demo-row__label { padding: 16px 24px 0; }
 
-  .demo-row__input { padding: 10px 24px 16px; }
+  /* 16px so iOS Safari doesn't auto-zoom the viewport on focus */
+  .demo-row__input { padding: 10px 24px 16px; font-size: 16px; }
 
   .demo-chips { padding: 4px 24px 16px; }
 
@@ -1871,4 +1880,32 @@ figure { margin: 0; }
   .quote-card__avatar { width: 56px; height: 56px; }
 
   .quote-card__count { font-size: 14px; }
+}
+
+/* ============================================================
+   Mobile copy rhythm (defined LAST so it wins source-order over
+   every per-element base rule above). Desktop caps line-length in
+   `ch`/`em` and pins some line-heights in px to tune specific line
+   breaks in a wide column; on a phone those force early wraps and
+   airy, uneven gaps. Here copy spans the full content width and
+   breathes on a relative line-height. All mobile-scoped — desktop
+   keeps its exact values.
+   ============================================================ */
+@media (max-width: 820px) {
+  .hero .display,
+  .hero__sub,
+  .results .heading,
+  .results__proof,
+  .cta__sub,
+  .figure__label,
+  .figure__caps,
+  .team .display,
+  .pivot__line { max-width: none; }
+
+  .lead,
+  .results__body,
+  .privacy-lead { line-height: 1.5; }
+
+  .clause__text p,
+  .clause__text ul { line-height: 1.55; }
 }

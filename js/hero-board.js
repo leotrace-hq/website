@@ -24,7 +24,7 @@ const CANDIDATES = [
   { c: -1, r: -2 }, { c: 1, r: -2 }, { c: 2, r: -1 },
 ];
 
-const KNIGHT_SRC = 'assets/knight.png?v=42';
+const KNIGHT_SRC = 'assets/knight.png?v=44';
 
 export function initHero() {
   const hero = document.getElementById('hero');
@@ -56,7 +56,7 @@ function run(hero, canvas, getImg) {
     // below the copy (see the mobile hero rules in styles.css); desktop
     // runs it large and dominant — the piece is the hero, bleeding to the
     // frame edges where overflow clips it
-    const unit = mobile ? clamp(w * 0.12, 54, 100) : clamp(w * 0.087, 80, 150);
+    const unit = mobile ? clamp(w * 0.155, 62, 120) : clamp(w * 0.087, 80, 150);
     // home square: right-of-centre on desktop (copy sits left), lower-mid on
     // mobile (copy sits above). Desktop x eased in from the edge so the full
     // eight-target constellation lands inside the frame, not just the piece.
@@ -463,10 +463,29 @@ function run(hero, canvas, getImg) {
   }
 
   let animState = EMPTY;
-  const redraw = () => render(animState);
+
+  // The mobile canvas is in-flow (position:relative), so at init it can be
+  // measured before layout gives it a width — fitCanvas then clamps the
+  // backing store to 1px and the board never draws. The recovery hooks
+  // (fonts.ready, img.onload) call redraw(), so re-measure here whenever the
+  // backing store no longer matches the CSS box. No-op once it matches
+  // (desktop's absolute canvas always matches), so the lifecycle is unchanged.
+  function remeasureIfStale() {
+    const rect = canvas.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const wantW = Math.max(1, Math.round(rect.width * dpr));
+    const wantH = Math.max(1, Math.round(rect.height * dpr));
+    if (rect.width > 0 && (canvas.width !== wantW || canvas.height !== wantH)) {
+      boardCache = null;
+      measure();
+    }
+  }
+  const redraw = () => { remeasureIfStale(); render(animState); };
 
   measure();
   render(animState);           // board + knight; paths hidden until the title lands
+  // catch the init race: if width wasn't available above, the next frame fixes it
+  requestAnimationFrame(redraw);
 
   window.addEventListener('resize', () => { boardCache = null; measure(); render(animState); });
   whileVisible(canvas, (vis) => { if (vis) render(animState); });
