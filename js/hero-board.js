@@ -24,7 +24,7 @@ const CANDIDATES = [
   { c: -1, r: -2 }, { c: 1, r: -2 }, { c: 2, r: -1 },
 ];
 
-const KNIGHT_SRC = 'assets/knight.png?v=41';
+const KNIGHT_SRC = 'assets/knight.png?v=42';
 
 export function initHero() {
   const hero = document.getElementById('hero');

@@ -4,9 +4,9 @@
 // founder-quotes sequence (grow → resolve → flick → resolve → release).
 // Module imports carry the same version as the entry script in
 // team/index.html — bump them together.
-import { initNav } from './nav.js?v=36';
-import { initReveal } from './reveal.js?v=36';
-import { clamp, lerp, easeOut, easeInOut, rng, fitCanvas, whileVisible, reducedMotion, DOT } from './util.js?v=36';
+import { initNav } from './nav.js?v=42';
+import { initReveal } from './reveal.js?v=42';
+import { clamp, lerp, easeOut, easeInOut, rng, fitCanvas, whileVisible, reducedMotion, DOT } from './util.js?v=42';
 
 const COUNT_MS = 1200;   // per-figure count-up
 const STAGGER = 150;     // block beat between figures
