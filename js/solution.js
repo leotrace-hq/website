@@ -9,22 +9,15 @@
 // scroll into view, graphics playing on arrival. Reduced-motion: all
 // three fully resolved, no pin.
 
-import { clamp, easeOut, reducedMotion, DOT } from './util.js';
+import { clamp, reducedMotion, DOT } from './util.js';
 
 const SVGNS = 'http://www.w3.org/2000/svg';
 const GRID = 10;   // dot pitch inside the 240×240 canvas
 
-// the sequence is a pure function of pin progress: each card owns an
-// exact third — drift in, then its graphic draws — with no gaps, so
-// every bit of scroll advances something and the pin releases exactly
-// when the third graphic completes
-const T = 1 / 3;
-const STEPS = [
-  { card: [0 * T, 0 * T + 0.14], gfx: [0 * T + 0.14, 1 * T] },
-  { card: [1 * T, 1 * T + 0.14], gfx: [1 * T + 0.14, 2 * T] },
-  { card: [2 * T, 2 * T + 0.14], gfx: [2 * T + 0.14, 1.0] },
-];
-const TRAVEL = 120; // px the card rises into position — a real slide, not a fade-pop
+// desktop staging thresholds: as the pin scrolls, each card crosses its
+// fraction once and plays (see runStaged). Spread across the pin so the
+// three land one at a time, with a release runway after the third.
+const STAGE_AT = [0.04, 0.38, 0.72];
 
 function circle(svg, x, y, r, fill, stroke) {
   const c = document.createElementNS(SVGNS, 'circle');
@@ -192,90 +185,62 @@ export function initSolution() {
   if (mobile) {
     runArrival(sets);
   } else {
-    runScrub(section, sets);
+    runStaged(section, sets);
   }
 }
 
-/* ---------- desktop: pinned, strictly sequential, scroll-driven ---------- */
+// Play a card's graphic as a short, staggered opacity cascade, one-shot.
+// Each dot's opacity is written ONCE (with a CSS transition + delay), so
+// the animation runs on the compositor — no per-frame style writes.
+// Shared by the desktop staged path and the mobile arrival path.
+function playGraphic({ anim }) {
+  for (const { el, order } of anim) {
+    el.style.transition = 'opacity 240ms ease-out';
+    el.style.transitionDelay = `${Math.round(order * 3.2)}ms`;
+  }
+  requestAnimationFrame(() => {
+    for (const { el } of anim) el.style.opacity = '1';
+  });
+}
 
-function runScrub(section, sets) {
-  // cards are driven directly — no CSS transition lag under a scrub
-  for (const { card } of sets) card.style.transition = 'none';
+/* ---------- desktop: pinned, staged — each card arrives and plays ---------- */
 
-  const FADE = 26; // order-units over which each dot eases in
+// The pin gives three side-by-side cards room to land one at a time. As
+// the pin scrolls, each card crosses its threshold once and *plays* — it
+// rises in (the same `.is-in` CSS transition the mobile path uses) and
+// its graphic cascades — instead of the whole figure being drawn dot-by-
+// dot under a raw scrub (the old "manual task" feel). No per-frame writes
+// and no rAF: a passive scroll handler reading a cached progress fires
+// each stage exactly once. Fully scrollable-through.
+function runStaged(section, sets) {
+  // cache geometry so the scroll handler never reads layout per tick
+  let secTop = 0;
+  let scrollable = 1;
+  const measure = () => {
+    secTop = section.getBoundingClientRect().top + window.scrollY;
+    scrollable = Math.max(1, section.offsetHeight - window.innerHeight);
+  };
+  measure();
+  window.addEventListener('resize', measure, { passive: true });
 
-  function applyState(p) {
-    sets.forEach(({ card, anim, maxOrder, minOrder }, i) => {
-      const [ca, cb] = STEPS[i].card;
-      const raw = clamp((p - ca) / (cb - ca), 0, 1);
-      // fade completes early so the tail of the rise is fully visible
-      card.style.opacity = easeOut(Math.min(1, raw / 0.55)).toFixed(3);
-      card.style.transform = `translateY(${((1 - easeOut(raw)) * TRAVEL).toFixed(1)}px)`;
-
-      const [ga, gb] = STEPS[i].gfx;
-      const g = clamp((p - ga) / (gb - ga), 0, 1);
-      // normalised to the graphic's own order range: the first pixel of
-      // its scroll window already draws, the last pixel completes it
-      const front = minOrder + g * (maxOrder - minOrder + FADE);
-      for (const d of anim) {
-        d.el.style.opacity = clamp((front - d.order) / FADE, 0, 1).toFixed(3);
-      }
+  const fired = sets.map(() => false);
+  const check = () => {
+    const p = clamp((window.scrollY - secTop) / scrollable, 0, 1);
+    sets.forEach((set, i) => {
+      if (fired[i] || p < STAGE_AT[i]) return;
+      fired[i] = true;
+      set.card.classList.add('is-in'); // CSS rise + fade
+      playGraphic(set);                 // staggered dot cascade
     });
-  }
-
-  function progress() {
-    const rect = section.getBoundingClientRect();
-    const scrollable = rect.height - window.innerHeight;
-    if (scrollable <= 0) return 1;
-    return clamp(-rect.top / scrollable, 0, 1);
-  }
-
-  let cur = -1;
-  let last = -1;
-  let rafId = 0;
-  let visible = true;
-
-  function frame() {
-    rafId = 0;
-    if (!visible) return;
-    // scroll-driven with a short glide: the sequence flows through the
-    // scroll input rather than tracking it like a crank — it settles
-    // within a couple hundred ms of stopping, and reverses the same way
-    const target = progress();
-    cur = cur < 0 ? target : cur + (target - cur) * 0.19;
-    if (Math.abs(cur - target) < 0.0005) cur = target;
-    if (cur !== last) {
-      last = cur;
-      applyState(cur);
-    }
-    rafId = requestAnimationFrame(frame);
-  }
-
-  const io = new IntersectionObserver(
-    (entries) => {
-      visible = entries[0].isIntersecting;
-      if (visible && !rafId) rafId = requestAnimationFrame(frame);
-    },
-    { rootMargin: '80px' }
-  );
-  io.observe(section);
-  rafId = requestAnimationFrame(frame);
+  };
+  check(); // fire any stage already scrolled past on load
+  window.addEventListener('scroll', check, { passive: true });
 }
 
 /* ---------- mobile: cards arrive as they scroll into view ---------- */
 
 function runArrival(sets) {
   const bySvg = new Map(sets.map((s) => [s.card, s]));
-
-  const playGraphic = ({ anim }) => {
-    for (const { el, order } of anim) {
-      el.style.transition = 'opacity 240ms ease-out';
-      el.style.transitionDelay = `${Math.round(order * 3.2)}ms`;
-    }
-    requestAnimationFrame(() => {
-      for (const { el } of anim) el.style.opacity = '1';
-    });
-  };
 
   const io = new IntersectionObserver(
     (entries) => {
