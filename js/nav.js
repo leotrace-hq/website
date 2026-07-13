@@ -32,6 +32,11 @@ export function initNav() {
   let lastY = window.scrollY;
   const DELTA = 6;
 
+  // cache the bar height so the scroll handler never reads layout per tick
+  // (the absolute mobile menu doesn't change it; only a resize can)
+  let navH = nav.offsetHeight;
+  window.addEventListener('resize', () => { navH = nav.offsetHeight; }, { passive: true });
+
   window.addEventListener(
     'scroll',
     () => {
@@ -39,7 +44,7 @@ export function initNav() {
       const moved = y - lastY;
       if (Math.abs(moved) < DELTA) return;
 
-      if (y <= nav.offsetHeight || nav.classList.contains('is-open')) {
+      if (y <= navH || nav.classList.contains('is-open')) {
         nav.classList.remove('is-hidden');
       } else if (moved > 0) {
         nav.classList.add('is-hidden');
