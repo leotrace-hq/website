@@ -1,0 +1,58 @@
+/* Cookie consent banner — self-hosted, gates Google Analytics.
+   Styling lives here (linked stylesheet = CSP style-src 'self'); the
+   script sets no inline styles. Dark bar reads cleanly over both the
+   light and dark pages of the site. */
+
+#cookie-banner {
+  position: fixed;
+  left: 50%;
+  bottom: 1.25rem;
+  transform: translateX(-50%);
+  z-index: 9999;
+  width: min(680px, calc(100% - 2rem));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  padding: 1rem 1.25rem;
+  background: #0d0f12;
+  color: #e8eaed;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.cookie-banner__text { margin: 0; flex: 1 1 260px; }
+.cookie-banner__text a { color: #fff; text-decoration: underline; }
+
+.cookie-banner__actions { display: flex; gap: 0.5rem; flex: 0 0 auto; }
+
+.cookie-btn {
+  font: inherit;
+  cursor: pointer;
+  padding: 0.5rem 1.1rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+.cookie-btn--solid { background: #fff; color: #0d0f12; }
+.cookie-btn--ghost { background: transparent; color: #e8eaed; border-color: rgba(255, 255, 255, 0.3); }
+.cookie-btn:focus-visible { outline: 2px solid #7aa2ff; outline-offset: 2px; }
+
+/* "Change your cookie choice" control inside the privacy policy */
+.cookie-link {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  #cookie-banner { flex-direction: column; align-items: stretch; }
+  .cookie-banner__actions { justify-content: flex-end; }
+}

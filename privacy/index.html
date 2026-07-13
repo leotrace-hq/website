@@ -5,11 +5,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
+        content="default-src 'none'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; img-src 'self' https://www.googletagmanager.com https://*.google-analytics.com; font-src 'self'; connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; base-uri 'none'; form-action 'none'">
   <title>LeoTrace — Privacy &amp; cookie policy</title>
   <meta name="description" content="How LeoTrace collects, uses, stores and safeguards personal data across LeoPrevent, LeoBench, LeoReveal and this website, including our use of cookies.">
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/styles.css?v=31">
+  <!-- Cookie consent (gates Google Analytics until opt-in) -->
+  <link rel="stylesheet" href="/css/consent.css?v=1">
+  <script src="/js/consent.js?v=1" defer></script>
   <script type="module" src="/js/privacy.js?v=31"></script>
 </head>
 <body id="top">
@@ -89,7 +92,7 @@
             <li><strong>_ga_&lt;id&gt;:</strong> keeps session state for a property &mdash; Google Analytics &mdash; 2 years.</li>
             <li><strong>__Secure-ENID:</strong> Google security and preferences cookie, set on google.com when Analytics loads &mdash; Google &mdash; ~13 months.</li>
           </ul>
-          <p>You can block or delete cookies in your browser settings, and opt out of Google Analytics across all sites using Google&rsquo;s <a href="https://tools.google.com/dlpage/gaoptout" rel="noopener">browser add-on</a>. Blocking these cookies will not affect how the site works.</p>
+          <p>Analytics cookies are set only if you accept them in our cookie banner. You can <button type="button" id="cookie-settings" class="cookie-link">change your cookie choice</button> at any time, block or delete cookies in your browser settings, or opt out of Google Analytics across all sites using Google&rsquo;s <a href="https://tools.google.com/dlpage/gaoptout" rel="noopener">browser add-on</a>. Declining will not affect how the site works.</p>
         </div>
       </section>
 
