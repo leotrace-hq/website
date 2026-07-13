@@ -129,7 +129,8 @@ export function initIssue() {
       if (on) step = i + 1;
     });
     stepEl.textContent = `${String(Math.max(step, 1)).padStart(2, '0')} / 03`;
-    barEl.style.width = `${(q * 100).toFixed(1)}%`;
+    // scaleX (composite) instead of width % (layout) — scrubbed per frame
+    barEl.style.transform = `scaleX(${q.toFixed(4)})`;
     // SPREAD % and the field share the point-locked spread progress
     const s = spreadOf(q);
     pctEl.textContent = `${String(Math.round(s * 100)).padStart(2, '0')}%`;
