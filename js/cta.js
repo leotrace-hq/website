@@ -1,14 +1,15 @@
 // The CTA — urgency made live. A real clock counts up from arrival and an
 // honest ≈line estimate ticks with it (~2 lines/s for one agent). Behind
-// the copy, a dot field accrues upward with time on the site and never
-// fully fills. Client-side only; collects nothing.
+// the copy, a dot field writes itself out as lines of code — ragged line
+// lengths, indented, each line drawn left-to-right and top to bottom — so
+// it reads as an agent typing. Client-side only; collects nothing.
 // Reduced-motion: static partial field; the counter still ticks.
 
 import { clamp, rng, fitCanvas, whileVisible, reducedMotion, DOT } from './util.js';
 
 const LINES_PER_SECOND = 2;
-const FILL_TAU_S = 540;   // time constant of the rise
-const FILL_MAX = 0.86;    // the field never fully fills
+const FILL_TAU_S = 110;   // write time-constant — brisk, not the old ~9-min crawl
+const FILL_MAX = 0.9;     // the field never fully fills
 
 function arrivalMs() {
   try {
@@ -30,10 +31,10 @@ export function initCta() {
 
   const t0 = arrivalMs();
   const elapsedS = () => Math.max(0, (Date.now() - t0) / 1000);
+  const still = reducedMotion();
 
   // --- the counter ---
-  function tick() {
-    const s = Math.floor(elapsedS());
+  function renderCounter(s) {
     const h = Math.floor(s / 3600);
     const m = Math.floor((s % 3600) / 60);
     const sec = s % 60;
@@ -42,42 +43,44 @@ export function initCta() {
       : `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
     linesEl.textContent = Math.floor(s * LINES_PER_SECOND).toLocaleString('en-US');
   }
-  tick();
-  setInterval(tick, 1000);
 
-  // --- the rising field ---
-  const still = reducedMotion();
+  // --- the field: lines of code, written line by line, left to right ---
   let field = null;
 
   function buildField() {
     const { ctx, w, h } = fitCanvas(canvas);
-    const gap = 15;
-    const dots = [];
     const rand = rng(42);
-    for (let x = gap / 2; x < w; x += gap) {
-      for (let y = gap / 2; y < h; y += gap) {
-        const fromBottom = 1 - y / h; // 0 at bottom … 1 at top
+    const rowGap = 16;    // line height
+    const charGap = 11;   // character pitch
+    const indentUnit = 26;
+    const dots = [];
+    let order = 0;        // global write-order: row-major, top→bottom, left→right
+    for (let y = rowGap; y < h - 2; y += rowGap) {
+      if (rand() < 0.12) { order += 6; continue; } // an occasional blank line
+      const indent = charGap + Math.floor(rand() * 3) * indentUnit; // 0–2 nesting levels
+      const maxChars = Math.max(4, Math.floor((w - indent - charGap) / charGap));
+      const len = Math.max(4, Math.round((0.35 + rand() * 0.6) * maxChars)); // ragged length
+      for (let i = 0; i < len; i++) {
         dots.push({
-          x: x + (rand() - 0.5) * gap * 0.8,
-          y: y + (rand() - 0.5) * gap * 0.8,
-          // level at which this dot appears; bottom first, jittered frontier
-          level: clamp(fromBottom * 0.92 + (rand() - 0.5) * 0.14, 0, 1),
-          tone: rand() < 0.22 ? DOT.mid : DOT.faint,
+          x: indent + i * charGap,
+          y: y + (rand() - 0.5) * 2,
+          order: order++,
+          tone: rand() < 0.18 ? DOT.mid : DOT.faint,
         });
       }
+      order += 2; // a short beat at each line break
     }
-    field = { ctx, w, h, dots };
+    field = { ctx, w, h, dots, total: Math.max(1, order) };
   }
 
-  const fillLevel = () => FILL_MAX * (1 - Math.exp(-elapsedS() / FILL_TAU_S));
+  const frontier = () => FILL_MAX * (1 - Math.exp(-elapsedS() / FILL_TAU_S)) * field.total;
 
-  function drawField() {
+  function drawField(f) {
     const { ctx, w, h, dots } = field;
-    const level = fillLevel();
     ctx.clearRect(0, 0, w, h);
     for (const d of dots) {
-      if (d.level > level) continue;
-      const a = clamp((level - d.level) / 0.05, 0, 1);
+      if (d.order > f) continue;
+      const a = clamp((f - d.order) / 4, 0, 1); // soft leading edge — the cursor
       ctx.globalAlpha = a * (d.tone === DOT.faint ? 0.8 : 0.9);
       ctx.fillStyle = d.tone;
       ctx.beginPath();
@@ -88,22 +91,32 @@ export function initCta() {
   }
 
   buildField();
-  drawField();
+  drawField(frontier());
+  let lastSec = Math.floor(elapsedS());
+  renderCounter(lastSec);
 
-  window.addEventListener('resize', () => { buildField(); drawField(); });
+  window.addEventListener('resize', () => { buildField(); drawField(frontier()); });
 
-  if (still) return; // static partial field
-
+  // One rAF loop while the section is on screen drives both the counter
+  // (text swap only when the whole second changes) and the field write
+  // (redrawn only when the write-frontier actually advances, so it stops
+  // repainting once the fill plateaus). Off-screen it sleeps; on return
+  // the counter recomputes from the clock, so it is always correct. Under
+  // reduced motion the field stays static; only the counter keeps ticking.
   let visible = false;
-  let intervalId = 0;
-  whileVisible(canvas, (v) => {
-    visible = v;
-    if (visible && !intervalId) {
-      intervalId = setInterval(drawField, 1500); // it keeps accruing while they read
-      drawField();
-    } else if (!visible && intervalId) {
-      clearInterval(intervalId);
-      intervalId = 0;
+  let rafId = 0;
+  let lastF = -1;
+  function frame() {
+    rafId = 0;
+    if (!visible) return;
+    const s = Math.floor(elapsedS());
+    if (s !== lastSec) { lastSec = s; renderCounter(s); }
+    if (!still) {
+      const f = frontier();
+      if (Math.abs(f - lastF) >= 0.5) { lastF = f; drawField(f); }
     }
-  });
+    rafId = requestAnimationFrame(frame);
+  }
+  const wake = () => { if (!rafId && visible) rafId = requestAnimationFrame(frame); };
+  whileVisible(canvas, (v) => { visible = v; wake(); });
 }
