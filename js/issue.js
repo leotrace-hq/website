@@ -13,7 +13,7 @@ import { clamp, fitCanvas, whileVisible, reducedMotion } from './util.js';
 
 const POINT_AT = [0.14, 0.44, 0.74];
 const SCRUB_END = 0.92; // content completes here — 100% gets a beat before the HUD resolves
-const HUD_FADE_AT = 0.955; // HUD dissolves after the beat, before the pin releases
+const HUD_FADE_AT = 0.99; // HUD holds through the 100% beat, dissolving only as the pin releases
 
 // spread tied to the point progression: point 01 owns 0–33%, point 02
 // 33–66%, point 03 66–100% — the field only completes on the third point
@@ -211,7 +211,9 @@ export function initIssue() {
       last = cur;
       applyState(cur);
     }
-    updateHud(target);
+    // HUD tracks the eased value the user actually sees — not the raw
+    // target — so a brisk scroll can't fade it out ahead of the content
+    updateHud(cur);
     rafId = requestAnimationFrame(frame);
   }
 
