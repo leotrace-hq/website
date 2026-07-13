@@ -4,9 +4,9 @@
 // founder-quotes sequence (grow → resolve → flick → resolve → release).
 // Module imports carry the same version as the entry script in
 // team/index.html — bump them together.
-import { initNav } from './nav.js?v=31';
-import { initReveal } from './reveal.js?v=31';
-import { clamp, lerp, easeOut, easeInOut, rng, fitCanvas, whileVisible, reducedMotion, DOT } from './util.js?v=31';
+import { initNav } from './nav.js?v=36';
+import { initReveal } from './reveal.js?v=36';
+import { clamp, lerp, easeOut, easeInOut, rng, fitCanvas, whileVisible, reducedMotion, DOT } from './util.js?v=36';
 
 const COUNT_MS = 1200;   // per-figure count-up
 const STAGGER = 150;     // block beat between figures
@@ -45,23 +45,27 @@ function initCounters() {
   io.observe(section);
 }
 
-// one dot language for the whole page: the matrix grammar (16px grid
-// of jittered ink squares, organic falloff). The edge patches are a
-// light dusting of it — a little drop, never a precise block.
+// one dot language for the whole page: the same 16px grid, one dot size
+// (Q_SIZE), tone carried by density — identical rules to the quotes field
+// below, so the edge patches read as the same system, just a lighter
+// dusting. A radial falloff (dense at the patch centre, scattering to
+// nothing at its edge) drops dots; it never modulates dot size.
 function drawMatrixPatch(ctx, cx, cy, size, seed) {
   const half = Math.ceil(size / Q_CELL / 2);
   for (let i = -half; i <= half; i++) {
     for (let j = -half; j <= half; j++) {
       const d = Math.hypot(i, j) / half;
+      const t = clamp(1 - d, 0, 1);          // 1 at centre → 0 at edge
       const h1 = qhash(i + seed * 31, j + seed * 17);
-      const f = 1 - d + (h1 - 0.5) * 0.45;
-      if (f < 0.3) continue;
-      const a = 0.05 + 0.24 * clamp((f - 0.3) / 0.55, 0, 1) * (0.6 + 0.4 * h1);
-      const sz = f > 0.72 ? 2.2 : 1.4;
+      // density = the chance this cell keeps its dot; peaks well below
+      // full so it stays a dusting, with a frayed, organic edge
+      const keep = 0.6 * t + (qhash(j + seed * 7, i + seed * 3) - 0.5) * 0.3;
+      if (h1 > keep) continue;
+      const a = (0.12 + 0.16 * t) * (0.7 + 0.5 * h1);
       ctx.fillStyle = `rgba(${Q_INK[0]},${Q_INK[1]},${Q_INK[2]},${a.toFixed(3)})`;
       ctx.fillRect(
         cx + i * Q_CELL + (qhash(j, i + seed) - 0.5) * 2,
-        cy + j * Q_CELL + (h1 - 0.5) * 2, sz, sz);
+        cy + j * Q_CELL + (h1 - 0.5) * 2, Q_SIZE, Q_SIZE);
     }
   }
 }
@@ -78,21 +82,24 @@ function initDotPatches() {
   window.addEventListener('resize', drawAll);
 }
 
-// the field behind the quote cards — the home page's section-2 matrix
-// grammar: a full-bleed 16px hash grid of ink squares, faint everywhere,
-// rising into dense organic patches at the edges and along the bottom
-const QUOTE_BLOBS = [
-  [0.92, 0.08, 0.30], [0.04, 0.28, 0.26], [0.99, 0.50, 0.28],
-  [0.02, 0.86, 0.36], [0.24, 1.00, 0.38], [0.52, 1.04, 0.38],
-  [0.78, 0.99, 0.38], [0.97, 0.85, 0.32],
-];
+// the field behind and below the founder quote — one continuous dot
+// system on a single 16px grid: consistent dot size, spacing and ink
+// throughout. Density alone carries the gradient. It's full and dense
+// behind the card and below it, then dissolves and scatters as it rises,
+// so the field disperses into the section above with no hard edge and no
+// second treatment. (Q_CELL / Q_INK / qhash are shared with the edge
+// patches above, so the whole page speaks one dot language.)
 const Q_CELL = 16;
 const Q_INK = [17, 17, 20];
+const Q_SIZE = 2.4; // one dot size everywhere in the field
 
 function qhash(x, y) {
   const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
   return n - Math.floor(n);
 }
+
+// smoothstep 0→1
+function qsmooth(x) { const t = clamp(x, 0, 1); return t * t * (3 - 2 * t); }
 
 function initQuoteDots() {
   const canvas = document.querySelector('.quotes__dots');
@@ -102,28 +109,25 @@ function initQuoteDots() {
     ctx.clearRect(0, 0, w, h);
     const cols = Math.ceil(w / Q_CELL);
     const rows = Math.ceil(h / Q_CELL);
-    const reach = Math.min(w, 1200);
-    for (let cx = 0; cx <= cols; cx++) {
-      for (let cy = 0; cy <= rows; cy++) {
-        const x = cx * Q_CELL;
-        const y = cy * Q_CELL;
-        let f = 0;
-        for (const [u, v, r] of QUOTE_BLOBS) {
-          const d = Math.hypot(x - u * w, y - v * h) / (r * reach);
-          f = Math.max(f, clamp(1 - d, 0, 1));
-        }
-        const h1 = qhash(cx, cy);
-        const organic = f + (h1 - 0.5) * 0.25; // frayed patch edges
-        let a, sz;
-        if (organic > 0.28) {
-          a = 0.2 + 0.62 * clamp((organic - 0.28) / 0.55, 0, 1) * (0.72 + 0.28 * h1);
-          sz = 2.6;
-        } else {
-          a = 0.05 + h1 * 0.04; // the faint background matrix
-          sz = 1.4;
-        }
+    for (let ci = 0; ci <= cols; ci++) {
+      for (let ri = 0; ri <= rows; ri++) {
+        const x = ci * Q_CELL;
+        const y = ri * Q_CELL;
+        // vertical position: 0 at the top of the field, 1 at the bottom.
+        // dense from ~60% down (behind + below the card), scattering up
+        const t = qsmooth((y / h) / 0.6);
+        const h1 = qhash(ci, ri);
+        // density = the chance this cell keeps its dot; the noise term
+        // frays the thinning edge so it never reads as a line
+        const keep = 0.06 + 0.94 * t + (qhash(ri, ci) - 0.5) * 0.1;
+        if (h1 > keep) continue;
+        // survivors hold a steady ink, easing off only toward the top
+        const a = (0.24 + 0.2 * t) * (0.8 + 0.4 * h1);
         ctx.fillStyle = `rgba(${Q_INK[0]},${Q_INK[1]},${Q_INK[2]},${a.toFixed(3)})`;
-        ctx.fillRect(x + (qhash(cy, cx) - 0.5) * 2, y + (h1 - 0.5) * 2, sz, sz);
+        ctx.fillRect(
+          x + (qhash(ri, ci) - 0.5) * 2,
+          y + (h1 - 0.5) * 2,
+          Q_SIZE, Q_SIZE);
       }
     }
   };

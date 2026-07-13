@@ -975,7 +975,6 @@ figure { margin: 0; }
 
 .about-dots--a { top: 32px; right: -140px; width: min(520px, 55vw); }
 .about-dots--b { bottom: -140px; left: -180px; width: min(520px, 55vw); }
-.about-dots--c { top: 34%; right: -160px; width: min(520px, 55vw); }
 
 /* ---------- Profile cards: one card, two states ---------- */
 
