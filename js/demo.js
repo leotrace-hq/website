@@ -202,11 +202,13 @@ function buildField(canvas, edge, seed) {
   return { ctx, w, h, dots };
 }
 
-function drawField(field, t) {
+function drawField(field, t, amp = 1) {
   const { ctx, w, h, dots } = field;
   ctx.clearRect(0, 0, w, h);
   for (const d of dots) {
-    const tw = t < 0 ? 1 : 0.75 + 0.25 * Math.sin(d.phase + t * d.rate);
+    // amp scales the twinkle depth: full on arrival, eased to 0 so the
+    // field resolves to static (t < 0 is the resolved frame)
+    const tw = t < 0 ? 1 : (1 - 0.25 * amp) + 0.25 * amp * Math.sin(d.phase + t * d.rate);
     ctx.globalAlpha = d.alpha * tw;
     ctx.fillStyle = d.tone;
     ctx.beginPath();
@@ -232,17 +234,26 @@ function initDotFields() {
 
   if (still) return; // static depth
 
+  // the twinkle plays briefly on arrival, then eases to nothing and the
+  // rAF stops — the field settles to static rather than repainting forever
+  const SETTLE_MS = 2600;
+  let startT = -1;
   let visible = false;
   let rafId = 0;
+  let done = false;
   function frame(now) {
     rafId = 0;
-    if (!visible) return;
-    fields.forEach((f) => drawField(f, now / 1000));
+    if (!visible || done) return;
+    if (startT < 0) startT = now;
+    const p = (now - startT) / SETTLE_MS;
+    if (p >= 1) { fields.forEach((f) => drawField(f, -1)); done = true; return; }
+    const amp = (1 - p) * (1 - p); // ease the twinkle depth down to zero
+    fields.forEach((f) => drawField(f, now / 1000, amp));
     rafId = requestAnimationFrame(frame);
   }
   whileVisible(left, (v) => {
     visible = v;
-    if (v && !rafId) rafId = requestAnimationFrame(frame);
+    if (v && !done && !rafId) rafId = requestAnimationFrame(frame);
   });
 }
 
