@@ -24,7 +24,7 @@ const CANDIDATES = [
   { c: -1, r: -2 }, { c: 1, r: -2 }, { c: 2, r: -1 },
 ];
 
-const KNIGHT_SRC = 'assets/knight.png?v=34';
+const KNIGHT_SRC = 'assets/knight.png?v=41';
 
 export function initHero() {
   const hero = document.getElementById('hero');
@@ -52,15 +52,27 @@ function run(hero, canvas, getImg) {
     const mobile = w < 821;
     // k = cell edge (px). Matches Blueprint 3 (~117 @ 1440); the dissolve keeps
     // the board contained in the right portion with no bleed off any edge.
-    const unit = clamp(w * (mobile ? 0.11 : 0.081), 80, 130);
+    // mobile scales the piece down so it sits in its own stacked band
+    // below the copy (see the mobile hero rules in styles.css); desktop
+    // runs it large and dominant — the piece is the hero, bleeding to the
+    // frame edges where overflow clips it
+    const unit = mobile ? clamp(w * 0.12, 54, 100) : clamp(w * 0.087, 80, 150);
     // home square: right-of-centre on desktop (copy sits left), lower-mid on
-    // mobile (copy sits above)
+    // mobile (copy sits above). Desktop x eased in from the edge so the full
+    // eight-target constellation lands inside the frame, not just the piece.
     const home = mobile
       ? { x: w * 0.54, y: h * 0.60 }
-      : { x: w * 0.742, y: h * 0.59 };
+      : { x: w * 0.70, y: h * 0.54 };
     // board dissolves before it reaches the copy column (desktop) so the
     // headline keeps clean negative space to its right
     const copyEdge = mobile ? { x0: -1, x1: -1 } : { x0: w * 0.48, x1: w * 0.62 };
+    // right edge of the copy column in canvas coords — the paths fade out
+    // here so they never draw over the text (the board is masked separately)
+    let copyX = -1;
+    if (!mobile) {
+      const content = hero.querySelector('.hero__content');
+      if (content) copyX = content.getBoundingClientRect().right - canvas.getBoundingClientRect().left + 20;
+    }
     // --- TRUE PERSPECTIVE (homography). The board is a flat grid on the ground
     //     plane, camera tilted down: near (front) cells are ~1.5x the far (back)
     //     cells, and the front-edge diamond sits at ~27deg. D shrinks toward the
@@ -72,7 +84,7 @@ function run(hero, canvas, getImg) {
     const Q = 0.89 * unit * D0;
     const P = 0.51 * Q * D0 / tt;            // tan(27deg) ~ 0.51
     const HOR = home.y - P / D0;
-    V = { ctx, w, h, mobile, home, unit, copyEdge, D0, tt, Q, P, HOR };
+    V = { ctx, w, h, mobile, home, unit, copyEdge, copyX, D0, tt, Q, P, HOR };
   }
 
   // 0 over the copy column, 1 out in the open (desktop only)
@@ -208,10 +220,13 @@ function run(hero, canvas, getImg) {
     // left — dissolve before the copy column (desktop); right; top. No bottom
     // band: the front (nearest) row of cells must stay fully visible, and the
     // distance falloff already lightens them.
-    const lx0 = (mobile ? 0.14 : 0.50) * w, lx1 = (mobile ? 0.34 : 0.62) * w;
+    const lx0 = (mobile ? 0.14 : 0.52) * w, lx1 = (mobile ? 0.34 : 0.62) * w;
     band(lx0, 0, lx1, 0, 0, 0, lx1, h);
-    band(w, 0, 0.93 * w, 0, 0.93 * w, 0, w - 0.93 * w, h);
-    band(0, 0.02 * h, 0, 0.20 * h, 0, 0, w, 0.20 * h);
+    // right/top: only a thin feather at the very edge — the framed surface
+    // clips the field cleanly, so the piece bleeds to the frame rather than
+    // dissolving short of it
+    band(w, 0, 0.98 * w, 0, 0.98 * w, 0, w - 0.98 * w, h);
+    band(0, 0.02 * h, 0, 0.12 * h, 0, 0, w, 0.12 * h);
     cx.restore();
   }
 
@@ -393,6 +408,16 @@ function run(hero, canvas, getImg) {
     for (const p of PATHS) if (!p.secured) drawMove(p, st.reveal, st.targetR);
     const sec = PATHS.find((p) => p.secured);
     if (sec) drawMove(sec, st.reveal, st.targetR);
+    // fade the paths out at the copy column's edge so the left-reaching
+    // candidates never draw over the text (the board is masked already)
+    if (V.copyX > 0) {
+      ctx.globalCompositeOperation = 'destination-out';
+      const g = ctx.createLinearGradient(V.copyX, 0, V.copyX - 44, 0);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, 'rgba(0,0,0,1)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, V.copyX, V.h);
+    }
     ctx.restore();
   }
 

@@ -173,12 +173,12 @@ figure { margin: 0; }
 .btn--solid:hover { background: var(--btn-solid-hover); }
 
 .btn--ghost {
-  background: var(--surface-2);
-  color: var(--text-2);
+  background: transparent;
+  color: var(--text-1);
   box-shadow: inset 0 0 0 1px var(--hairline);
 }
 
-.btn--ghost:hover { color: var(--text-1); }
+.btn--ghost:hover { background: var(--scrim-hover); }
 
 .cta-row {
   display: flex;
@@ -332,23 +332,29 @@ figure { margin: 0; }
 }
 
 /* ============================================================
-   02 · Hero — full viewport; text hard-left, piece low-right
+   02 · Hero — a single hairline-framed instrument surface. A tight,
+   quiet copy column sits at the left; the particle piece is large and
+   dominant at the right, bleeding to the frame edges where the frame's
+   overflow cleanly clips it. The nav stays full-width, above the frame.
    ============================================================ */
 
 .hero {
   position: relative;
-  /* the translucent bar overlays the hero, so the hero owns the full
-     viewport and its content centres on the screen, not below the bar */
-  margin-top: calc(-1 * var(--nav-h));
-  height: 100vh;
-  height: 100svh;
+  background: var(--canvas);
+  /* the framed surface is inset from the viewport, aligning to the nav's
+     own edge (--chrome-pad); the nav sits above and outside it */
+  padding: 0 var(--chrome-pad) var(--chrome-pad);
 }
 
 .hero__sticky {
-  height: 100%;
+  position: relative;
+  height: calc(100svh - var(--nav-h) - var(--chrome-pad));
   display: flex;
   align-items: center;
-  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--surface-1); /* faint elevated fill */
+  overflow: hidden;             /* clips the piece bleeding past the edges */
 }
 
 .hero__canvas {
@@ -359,17 +365,30 @@ figure { margin: 0; }
   pointer-events: none;
 }
 
+/* a tight, quiet copy column — its edge set 80px inside the frame. The
+   piece carries the drama to its right, so the type stays restrained. */
 .hero__content {
   position: relative;
   z-index: 1;
-  padding-block: 96px;
+  max-width: 700px;
+  /* ~80px inside the frame on wide screens; eases in on narrower desktops
+     so the copy always clears the piece */
+  padding-inline-start: clamp(32px, 5.5vw, 80px);
+  padding-block: 40px;
 }
 
-.hero .display { margin-top: 24px; }
+/* pulled back from the earlier 78px so the piece — not the type — reads
+   as the hero; still two lines per sentence (12ch is size-invariant) */
+.hero .display {
+  margin-top: 24px;
+  font-size: clamp(44px, 4.6vw, 66px);
+  line-height: 1.05;
+  max-width: 12ch;
+}
 
 .hero__sub {
   margin-top: 28px;
-  max-width: 42ch;
+  max-width: 40ch;
 }
 
 .hero .cta-row { margin-top: 36px; }
@@ -891,9 +910,40 @@ figure { margin: 0; }
   .nav.is-open .nav__burger span:first-child { transform: translateY(3.25px) rotate(45deg); }
   .nav.is-open .nav__burger span:last-child { transform: translateY(-3.25px) rotate(-45deg); }
 
-  /* full-bleed environment behind the copy; the floor sits low so the
-     text keeps its own space */
-  .hero__content { padding-block: calc(var(--nav-h) + 24px) 40vh; }
+  /* mobile: no two-column bleed. The piece STACKS in flow, in its own
+     band BELOW the copy — never behind it. The hero drops its full-bleed
+     pull and the canvas becomes an in-flow block after the text. */
+  .hero {
+    height: auto;
+    margin-top: 0;
+    padding: 0 14px 14px; /* tighter frame inset on mobile */
+  }
+
+  .hero__sticky {
+    flex-direction: column;
+    align-items: stretch;
+    height: auto;
+    min-height: calc(100svh - var(--nav-h) - 14px);
+  }
+
+  /* reset the desktop 80px column inset; copy spans the framed card */
+  .hero__content {
+    order: 1;
+    max-width: none;
+    padding: 28px 20px 0;
+  }
+
+  .hero__canvas {
+    position: relative;
+    inset: auto;
+    order: 2;
+    width: 100%;
+    height: clamp(220px, 32svh, 320px);
+  }
+
+  /* the desktop size is for the wide frame; on mobile the headline steps
+     down so it stays a comfortable four lines in the narrower card */
+  .hero .display { font-size: 38px; }
 
   .heading { font-size: 28px; }
 
