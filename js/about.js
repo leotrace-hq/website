@@ -160,6 +160,10 @@ function initQuotes() {
   let gCur = -1;
   let visible = false;
   let rafId = 0;
+  // the slide distance (item width + 200px flow gap) is constant between
+  // resizes — measure it once, never inside apply(), so no forced reflow
+  // happens per animation frame
+  let stepW = items[0].offsetWidth + 200;
 
   const progress = () => {
     const r = section.getBoundingClientRect();
@@ -183,8 +187,7 @@ function initQuotes() {
     // the card never moves — the content slides right-to-left through
     // it, scrubbed with the scroll (the glide keeps it silky)
     const slide = easeInOut(clamp((p - 0.32) / 0.36, 0, 1));
-    const step = items[0].offsetWidth + 200; // item + flow gap
-    flow.style.transform = `translateX(${(-slide * step).toFixed(2)}px)`;
+    flow.style.transform = `translateX(${(-slide * stepW).toFixed(2)}px)`;
     if (g > 0.88) items[0].classList.add('is-live'); // one-shot
   }
 
@@ -202,8 +205,16 @@ function initQuotes() {
   }
 
   const wake = () => { if (!rafId && visible) rafId = requestAnimationFrame(frame); };
-  whileVisible(section, (v) => { visible = v; wake(); });
-  window.addEventListener('resize', wake);
+  // will-change is a scalpel: promote the transformed layers only while
+  // the section is on screen, and drop the promotion when it sleeps
+  whileVisible(section, (v) => {
+    visible = v;
+    const wc = v ? 'transform' : 'auto';
+    viewport.style.willChange = wc;
+    flow.style.willChange = wc;
+    wake();
+  });
+  window.addEventListener('resize', () => { stepW = items[0].offsetWidth + 200; wake(); });
   wake();
 }
 

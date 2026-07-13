@@ -1714,7 +1714,7 @@ figure { margin: 0; }
   width: 100%;
   overflow: hidden; /* the waiting card never peeks; the flick is masked */
   border-radius: 14px;
-  will-change: transform;
+  /* will-change is set by about.js only while the section is on screen */
 }
 
 /* one static stage: the card never moves — the content slides through */
@@ -1733,7 +1733,7 @@ figure { margin: 0; }
   display: flex;
   gap: 200px;
   width: 100%;
-  will-change: transform;
+  /* will-change is set by about.js only while the section is on screen */
 }
 
 .quote-item {
